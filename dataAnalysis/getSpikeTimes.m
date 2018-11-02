@@ -10,7 +10,7 @@
 %           <allSpikeTimeCount.csv> - spike time step and number of spikes
 
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 5/09/2018
+% Last updated: 05/09/2018
 function getSpikeTimes(h5dir)
 if exist([h5dir '/allSpikeTime.csv'],'file') == 2 || ...
     exist([h5dir '/allSpikeTimeCount.csv'],'file') == 2
