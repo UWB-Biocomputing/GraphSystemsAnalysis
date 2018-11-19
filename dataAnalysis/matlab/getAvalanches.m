@@ -1,15 +1,16 @@
-%GETAVALANCHES 
-% 
-%   Syntax:  getAvalanches(h5dir)
-%   
-%   Input:
-%   infile - BrainGrid simulation result (.h5)
+%GETAVALANCHES Group spikes into different avalanche events based on the 
+%meanISI. In addition, a burst can be identified based on the size or 
+%duration of the avalanche (size > 1e4 or width > 1e3).
 %
-%   Output:
-%   <allAvalanche.csv> - spike time step and neuron indexes 
+%   Syntax: getAvalanches(h5dir)
+%   
+%   Input:  h5dir - BrainGrid simulation result (.h5)
+%
+%   Output: <allAvalanche.csv>      - avalanche metadata 
+%           <allAvalBurst.csv>      - burst metadata
 
-% Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 5/09/2018
+% Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
+% Last updated: 11/06/2018
 function getAvalanches(h5dir)
 spiketime = csvread([h5dir '/allSpikeTimeCount.csv']);
 space = diff(spiketime(:,1));        % find interspike intervals (ISI)
@@ -30,7 +31,7 @@ fprintf('meanISI: %.4f\n', meanISI);
 % -----------------------------------------------------------------
 fid_aval = fopen([h5dir '/allAvalanche.csv'], 'w') ;
 fprintf(fid_aval, 'ID,StartRow,EndRow,StartT,EndT,Width,TotalSpikes\n');
-fid_burst = fopen([h5dir '/allBurst.csv'], 'w') ;
+fid_burst = fopen([h5dir '/allAvalBurst.csv'], 'w') ;
 fprintf(fid_burst, 'ID,StartRow,EndRow,StartT,EndT,Width,TotalSpikes,IBI\n');
 n_avals = 0;                        % number of avalanches 
 n_bursts = 0;                       % number of bursts
@@ -59,7 +60,7 @@ while i < length(space)
         % - if the avalanche is a burst (spikeRate > burstThreshold),
         %   output prebursta and nonburst window info to output file
         % ---------------------------------------------------------------------
-        % width > 1e3? or n_spikes > 1e4 can be criteria to detect burst
+        % width > 1e3 or n_spikes > 1e4 can be criteria to detect burst
         if n_spikes > 1e4
             n_bursts = n_bursts + 1;
             interval = spiketime(i-1,1) - spiketime(last,1);           

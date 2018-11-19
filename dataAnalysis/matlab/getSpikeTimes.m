@@ -2,16 +2,17 @@
 %Read BrainGrid result in HDF5 format and convert spikesProbedNeurons to 
 %easy-to-understand format for data analysis
 % 
-%   Syntax: getSpikeTimes(h5file)
+%   Syntax: getSpikeTimes(h5dir)
 %   
-%   Input:  h5file  - BrainGrid simulation result (.h5)
+%   Input:  h5dir  - BrainGrid simulation file (.h5)
 %
 %   Output: <allSpikeTime.csv>      - spike time step and neuron indexes 
 %           <allSpikeTimeCount.csv> - spike time step and number of spikes
 
-% Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 5/09/2018
+% Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
+% Last updated: 11/19/2018
 function getSpikeTimes(h5dir)
+% h5dir = '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
 if exist([h5dir '/allSpikeTime.csv'],'file') == 2 || ...
     exist([h5dir '/allSpikeTimeCount.csv'],'file') == 2
     error('spikeTime file already exsited.');
@@ -38,7 +39,7 @@ fid2 = fopen([h5dir '/allSpikeTimeCount.csv'], 'w');
 keeper = ones(n_neurons,1);     % keep track of columns, start with column 1
 values = P(:,1);                % keep next unrecorded firing time
 for i = 1:n_timesteps
-     % no more unrecorded data
+    % no more unrecorded data
     if any(values) == 0  
         break;      
     end
@@ -46,7 +47,7 @@ for i = 1:n_timesteps
     idx = find(values == time);                 % neurons that fired at the same time
     fprintf(fid1,'%d', time);                   % record time step 
     fprintf(fid2,'%d,%d\n',time,length(idx));   % record time and count 
-%     fprintf('time step: %d\n', time);         % for debugging 
+    %%fprintf('time step: %d\n', time);         % for debugging 
     for j = 1:length(idx)   
         fprintf(fid1, ',%d', idx(j));           % record neuron number
         % keep track of next unrecorded column for each neuron 
@@ -62,6 +63,6 @@ for i = 1:n_timesteps
 fprintf(fid1, '\n');                             % done with this time step
 %%fprintf('\n');                                 % for debugging 
 end
-fprintf('Total time steps that has activities: %d,', i);
+fprintf('Total time steps that has activities: %d\n', i);
 fclose(fid1);    
 fclose(fid2);

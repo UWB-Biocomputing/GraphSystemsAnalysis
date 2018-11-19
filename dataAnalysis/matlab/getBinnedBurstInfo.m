@@ -3,20 +3,20 @@
 %10ms bin). Identify burst using burst threshold of 0.5 spikes/sec/neuron,
 %extract burst information (start/end time, count, width, size, etc)
 % 
-%   Syntax: getBinnedBurstInfo(h5file)
+%   Syntax: getBinnedBurstInfo(h5dir)
 %   
 %   Input:  
-%   h5file  - BrainGrid result filename (e.g. tR_1.0--fE_0.90_10000)
+%   h5dir  - BrainGrid simulation file (e.g. tR_1.0--fE_0.90_10000)
 %
-%   Output: 
+%   Output:  
 %   <binnedBurstInfo.csv> - burst metadata
 
-% Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 4/17/2018
-function getBinnedBurstInfo(h5file)
-
-n_neurons = length(hdf5read([h5file '.h5'], 'neuronTypes')); 
-SH = double(hdf5read([h5file '.h5'], 'spikesHistory'));
+% Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
+% Last updated: 11/06/2018
+function getBinnedBurstInfo(h5dir)
+% h5dir = '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
+n_neurons = length(hdf5read([h5dir '.h5'], 'neuronTypes')); 
+SH = double(hdf5read([h5dir '.h5'], 'spikesHistory'));
 SH10ms = SH/n_neurons;                          % spikes/neuron per bin                        
 % In Kawasaki, F. & Stiber, M. (2014): 
 %   - 0.5 spikes/sec/neuron as a threshold for burst detection
@@ -29,7 +29,7 @@ b_boundary = [0; b_boundary];                   % boundary condition
 b_boundary = [b_boundary; length(b_bins)];      % boundary condition
 prev_peak = 0;
 % Output file
-fid = fopen([h5file '/binnedBurstInfo.csv'], 'w') ;         
+fid = fopen([h5dir '/binnedBurstInfo.csv'], 'w') ;         
 fprintf(fid, ['ID,startBin#,endBin#,width(bins),totalSpikeCount,'... 
               'peakBin,peakHeight(spikes),Interval(bins)\n']);
 for i = 1:n_bursts

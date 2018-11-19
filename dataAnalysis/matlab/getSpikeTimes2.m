@@ -3,35 +3,35 @@
 %easy-to-understand format for data analysis. NOTE: This script read HDF5 
 %file a little at a time so won't be restricted by MATLAB RAM usage
 % 
-%   Syntax: getSpikeTimes(h5file)
+%   Syntax: getSpikeTimes(h5dir)
 %   
-%   Input:  h5file  - BrainGrid simulation result (.h5)
+%   Input:  h5dir  - BrainGrid simulation result (.h5)
 %
 %   Output: <allSpikeTime.csv>      - spike time step and neuron indexes 
 %           <allSpikeTimeCount.csv> - spike time step and number of spikes
 
-% Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 10/19/2018
-function getSpikeTimes2(h5file) 
-if exist([h5file '/allSpikeTime2.csv'],'file') == 2 || ...
-    exist([h5file '/allSpikeTimeCount2.csv'],'file') == 2
+% Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
+% Last updated: 11/19/2018
+function getSpikeTimes2(h5dir) 
+% h5dir = '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
+if exist([h5dir '/allSpikeTime2.csv'],'file') == 2 || ...
+    exist([h5dir '/allSpikeTimeCount2.csv'],'file') == 2
     error('spikeTime file already exsited.');
 end
-% h5file = 'tR_1.0--fE_0.90_10000';
 dataset = 'spikesProbedNeurons';
-n_timesteps = getH5datasetSize(h5file, 'spikesHistory')*100; 
-n_neurons = length(hdf5read([h5file '.h5'], 'neuronTypes'));
-maxCol = getH5datasetSize(h5file, dataset);
+n_timesteps = getH5datasetSize(h5dir, 'spikesHistory')*100; 
+n_neurons = length(hdf5read([h5dir '.h5'], 'neuronTypes'));
+maxCol = getH5datasetSize(h5dir, dataset);
 % -----------------------------------------------------------------
 % Output files
 % -----------------------------------------------------------------
-fid1 = fopen([h5file '/allSpikeTime2.csv'], 'w');           
-fid2 = fopen([h5file '/allSpikeTimeCount2.csv'], 'w');     
+fid1 = fopen([h5dir '/allSpikeTime2.csv'], 'w');           
+fid2 = fopen([h5dir '/allSpikeTimeCount2.csv'], 'w');     
 % ------------------------------------------------------------------------ 
 % Get spiking position(s) for every time step that has activities
 % ------------------------------------------------------------------------
 keeper = ones(n_neurons,1);          % keep track of columns, start with column 1
-values = h5read([h5file '.h5'], ...  % keep next unrecorded firing time
+values = h5read([h5dir '.h5'], ...  % keep next unrecorded firing time
                 ['/' dataset],[1,1],[n_neurons,1]);
 for i = 1:n_timesteps  
     % no more unrecorded data
@@ -49,7 +49,7 @@ for i = 1:n_timesteps
         keeper(idx(j)) = keeper(idx(j)) + 1;
         if keeper(idx(j)) <= maxCol
             % find the next unrecorded firing time (not -1s)
-            values(idx(j)) = h5read([h5file '.h5'], ['/' dataset], ... 
+            values(idx(j)) = h5read([h5dir '.h5'], ['/' dataset], ... 
                                     [idx(j),keeper(idx(j))],[1,1]); 
         else
             % no more spikes for this neuron to be recorded
@@ -59,6 +59,6 @@ for i = 1:n_timesteps
 fprintf(fid1, '\n');                             % done with this time step
 %%fprintf('\n');                                 % for debugging 
 end
-fprintf('Total time steps that has activities: %d,', i);
+fprintf('Total time steps that has activities: %d', i);
 fclose(fid1);    
 fclose(fid2);
