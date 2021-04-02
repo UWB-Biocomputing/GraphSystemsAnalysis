@@ -43,6 +43,7 @@ s=C1(1, :);
 t=C1(2,:);
 w=C1(3,:);
 
-G = graph(s,t,w);
+G = digraph(s,t,w);
+GUndirected=graph(s,t,w);
 plot(G)
 plot(G,'Layout','force')
