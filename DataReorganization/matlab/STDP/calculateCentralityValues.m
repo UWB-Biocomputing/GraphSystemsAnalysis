@@ -1,4 +1,4 @@
-%use readXmlSTDP to generate graph G using the output files
+ %use readXmlSTDP to generate graph G using the output files
 
 %3D scatter plots,  Points plotted indicate degree centrality value for each
 %neuron. Centrality values are shown as both as the Z coordinate and as point color.
@@ -21,7 +21,7 @@ zlabel('Page Rank')
 title('Page Rank Centrality')
 
 indeg = centrality(G,'indegree');
-scatter3(xloc, yloc, deg, S,deg , 'filled')
+scatter3(xloc, yloc, indeg, S,indeg , 'filled')
 colorbar
 xlabel('X axis')
 ylabel('Y axis')
@@ -29,7 +29,7 @@ zlabel('Indegree Centrality')
 title('Indegree Centrality Values')
 
 outdeg = centrality(G,'outdegree');
-scatter3(xloc, yloc, deg, S,deg , 'filled')
+scatter3(xloc, yloc, outdeg, S,outdeg , 'filled')
 colorbar
 xlabel('X axis')
 ylabel('Y axis')
