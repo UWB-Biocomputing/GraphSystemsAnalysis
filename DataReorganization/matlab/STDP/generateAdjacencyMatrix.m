@@ -1,9 +1,6 @@
 
 % run readXMLSTDP script for generating s, t and w
-graphInfo=readXmlFileSTDP(fileName);
-s=graphInfo(1);
-t=graphInfo(2);
-w=graphInfo(3);
+
 totalSynapses=size(s,2);
 numNeurons=max(s);
 %area matrix represents the adjacencvy matrix for 
