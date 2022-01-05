@@ -1,7 +1,9 @@
+[![DOI](https://zenodo.org/badge/153203376.svg)](https://zenodo.org/badge/latestdoi/153203376)
+
 # GraphSystemsAnalysis
 
 A repository with code to analyze data from simulations of graph-structured systems, such as development in
-cultures of dissociated cortical neurons. In particular, this code targets systems that produce spatiotemporal point processes, i.e., events at discrete points in time at either or both of graph vertices or graph edges. This code is primarily used by the
+cultures of dissociated cortical neurons or interactions in emergency services communications systems. In particular, this code targets systems that produce spatiotemporal point processes, i.e., events at discrete points in time at either or both of graph vertices or graph edges. This code is primarily used by the
 [UW Bothell Intelligent Networks Laboratory](http://depts.washington.edu/biocomp/). See the
 [Graphitti simulator](https://github.com/UWB-Biocomputing/Graphitti) and [Workbench
 provenance system](https://github.com/UWB-Biocomputing/WorkBench) repositories for
@@ -23,3 +25,7 @@ the other components of our research infrastructure.
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Intelligent Networks Laboratory Code of Conduct](https://github.com/UWB-Biocomputing/Graphitti/blob/master/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+
+## Contributing
+Please refer to the [Contributing Guide](CONTRIBUTING.md) for information about
+how internal and external contributors can work on this code.
