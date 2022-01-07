@@ -29,7 +29,7 @@ b_boundary = [0; b_boundary];                   % boundary condition
 b_boundary = [b_boundary; length(b_bins)];      % boundary condition
 prev_peak = 0;
 % Output file
-fid = fopen([h5dir '/binnedBurstInfo.csv'], 'w') ;         
+fid = fopen([h5dir '/allBinnedBurstInfo.csv'], 'w') ;         
 fprintf(fid, ['ID,startBin#,endBin#,width(bins),totalSpikeCount,'... 
               'peakBin,peakHeight(spikes),Interval(bins)\n']);
 for i = 1:n_bursts
