@@ -7,7 +7,7 @@ function getAllBinnedBurstFrames(h5file)
 head = 5;                       % number of bins before burst start bin
 tail = 5;                       % number of bins after burst end bin
 binSize = 100;                  % number of timesteps per bin
-bbInfo = csvread([h5file '/binnedBurstInfo.csv'],1,1);    % burst metadata
+bbInfo = csvread([h5file '/allBinnedBurstInfo.csv'],1,1);    % burst metadata
 n_burst = length(bbInfo);                       % total number of bursts
 maxSpike = getH5datasetSize(h5file, 'spikesProbedNeurons');
 % ------------------------------------------------------------------------

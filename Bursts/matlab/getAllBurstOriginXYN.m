@@ -14,7 +14,7 @@
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Last updated: 4/18/2018
 function getAllBurstOriginXYN(h5file)
-bbInfoFile = [h5file '/binnedBurstInfo.csv'];
+bbInfoFile = [h5file '/allBinnedBurstInfo.csv'];
 bbInfo = csvread(bbInfoFile,1,1);
 n_burst = length(bbInfo);                
 o_bin = 10;  
