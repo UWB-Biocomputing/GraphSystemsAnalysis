@@ -19,7 +19,7 @@ end
 head = 10;                      % number of bins before burst start bin
 tail = 0;                       % number of bins after burst end bin
 binSize = 100;                  % one bin becomes one frame
-spikesProbedNeurons = (h5read([h5dir '.h5'], '/spikesProbedNeurons'))';
+spikesProbedNeurons = (h5read([h5dir '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
 binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];
 binnedBurstsData = csvread(binnedBurstInfoFilePath,1,1);
 nBursts = length(binnedBurstsData);                         % number of bursts identified
