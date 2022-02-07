@@ -14,7 +14,8 @@
 %   <binnedBurstInfo.csv> - burst metadata
 
 % Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
-% Last updated: 11/06/2018
+% Last updated: 02/04/2022
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 function getBinnedBurstInfo(h5dir)
 % h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'        % this line is used for testing
 nNeurons = length(h5read([h5dir '.h5'], '/neuronTypes')); 

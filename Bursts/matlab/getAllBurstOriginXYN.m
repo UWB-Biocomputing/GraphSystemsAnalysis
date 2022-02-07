@@ -14,20 +14,22 @@
 %   <allBurstOriginN.csv> - burst origin neuron number for every burst
 
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 4/18/2018
+% Last updated: 02/06/2022
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 function getAllBurstOriginXYN(h5dir)
 binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];
 binnedBurstsData = csvread(binnedBurstInfoFilePath,1,1);
 nBursts = length(binnedBurstsData);             % size of allBinnedBurstinfo.csv
-originBin = 10;                                 % Origin bin
 
 % Output files
 outputFile1 = [h5dir '/allBurstOriginN.csv']; fid1 = fopen(outputFile1, 'w');
 outputFile2 = [h5dir '/allBurstOriginXY.csv']; fid2 = fopen(outputFile2, 'w');
 
 % get X Y N for each burst
+xloc = h5read([h5dir '.h5'], '/xloc');          % x location
+yloc = h5read([h5dir '.h5'], '/yloc');          % y location
 for iBurst = 1:nBursts
-    [X, Y, N] = getBurstOriginXYN(h5dir, originBin, iBurst);
+    [X, Y, N] = getBurstOriginXYN(h5dir, iBurst, xloc, yloc);
     fprintf(fid1, '%d\n', N);  
     fprintf(fid2, '%d, %d\n', X, Y);  
 end

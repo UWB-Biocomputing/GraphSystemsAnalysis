@@ -15,12 +15,12 @@
 %   <allBurstOriginN.csv> - burst origin neuron number for every burst
 
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 4/18/2018
-function [X, Y, N] = getBurstOriginXYN(h5dir, originBin, id)
+% Last updated: 02/06/2022
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+function [X, Y, N] = getBurstOriginXYN(h5dir, id, xloc, yloc)
 binnedBurstFramesFilePath = [h5dir, '/Binned/burst_', num2str(id), '.csv'];
-binnedBurstFrames = csvread(binnedBurstFramesFilePath);         % flattened image vectors         
-xloc = h5read([h5dir '.h5'], '/xloc');          % x location
-yloc = h5read([h5dir '.h5'], '/yloc');          % y location
+binnedBurstFrames = csvread(binnedBurstFramesFilePath);         % flattened image vectors
+originBin = 10;                                 
 grid = sqrt(length(xloc));                    	% grid size
 
 % find brightest pixel (neuron that spikes the most in a time bin)

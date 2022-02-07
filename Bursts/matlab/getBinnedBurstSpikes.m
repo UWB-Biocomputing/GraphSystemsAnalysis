@@ -10,7 +10,8 @@
 %
 %   Output: <Binned/burst_n.csv>  - flattened image arrays of a burst 
 % Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
-% Last updated: 11/19/2018
+% Last updated: 02/05/2022
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 function getBinnedBurstSpikes(h5dir)
 % h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'              this line is used for testing
 if ~exist([h5dir '/Binned'], 'dir')
