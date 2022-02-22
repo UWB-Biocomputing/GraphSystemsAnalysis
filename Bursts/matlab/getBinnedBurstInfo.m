@@ -27,7 +27,7 @@
 %               '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
 %
 %   Output:  
-%   <binnedBurstInfo.csv> - burst metadata
+%   <allbinnedBurstInfo.csv> - burst metadata
 %   the columns of the csv are named in the order of this list
 %   ID, startBin#, endBin#, width(bins), totalSpikeCount, peakBin, peakHeight(spikes), Interval(bins)
 %
