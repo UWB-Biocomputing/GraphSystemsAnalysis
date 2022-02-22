@@ -21,22 +21,32 @@
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
 function getAllBurstOriginXYN(h5dir)
+% Input file paths
 binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];
 framesFilePath = [h5dir 'allFrames.mat'];
+
+% Input file data
 burstInfo = csvread(binnedBurstInfoFilePath,1,1);
 frames = load(framesFilePath);
-nBursts = size(burstInfo,1);             % number of bursts
+
+% Number of bursts
+nBursts = size(burstInfo,1);             
 
 % Output files
 outputFile1 = [h5dir '/allBurstOriginN.csv']; fid1 = fopen(outputFile1, 'w');
 outputFile2 = [h5dir '/allBurstOriginXY.csv']; fid2 = fopen(outputFile2, 'w');
 
-% get x and y location of neurons
+% Get x and y location of neurons
 xloc = h5read([h5dir '.h5'], '/xloc');
 yloc = h5read([h5dir '.h5'], '/yloc');
-% calculate burst origin based on x and y location     
+
+% Calculate burst origin based on spikerates at each x and y location     
 for iBurst = 1:nBursts
-    [X, Y, N] = getBurstOriginXYN(frames.allFrames{[iBurst]}, xloc, yloc);
+    frame = frames.allFrames{[iBurst]};                 % spikerates
+    % Gets centroid of neurons with the brightest pixel (highest spikerate)
+    % by calculating the mean of neurons that produced the most spikes within 10ms.
+    % What returns are the X and Y location and Neuron number
+    [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc);
     fprintf(fid1, '%d\n', N);  
     fprintf(fid2, '%d, %d\n', X, Y);  
 end

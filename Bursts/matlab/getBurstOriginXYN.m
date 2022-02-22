@@ -11,16 +11,19 @@
 %   yloc    -   array containing all y location of each burst
 %
 %   Output: 
-%   <allBurstOriginXY.csv> - burst origin (x,y) location for every burst
-%   <allBurstOriginN.csv> - burst origin neuron number for every burst
+%   <allBurstOriginXY.csv>  - burst origin (x,y) location for every burst
+%   <allBurstOriginN.csv>   - burst origin neuron number for every burst
 
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Last updated: 02/22/2022  added improvement on performance for file reads
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
 function [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
-originBin = 10;  
-grid = sqrt(length(xloc));                    	% grid size
+% NOTE: assume square grid size
+grid = sqrt(length(xloc));
+
+% starts at 10 to leave room for start of movie before beginning of burst
+originBin = 10;
 
 % find brightest pixel (neuron that spikes the most in a time bin)
 brightestPixel = max(frame(:,originBin));      % originBin starts at 10
@@ -39,9 +42,9 @@ brightestPixelIndexes = find(frame(:,originBin)==brightestPixel, 2);           %
 points(1,iBrightestPixel) = xloc(brightestPixelIndexes(iBrightestPixel))+1;     % index starts at 0 in BG
 points(2,iBrightestPixel) = yloc(brightestPixelIndexes(iBrightestPixel))+1;     % matlab start from 1, so +1
 
+% get centroid of neurons with max value
+X = ceil(mean(points(1,:)));          
+Y = ceil(mean(points(2,:)));
+N = (Y-1)*grid + X;
 
-    % get centroid of neurons with max value
-    X = ceil(mean(points(1,:)));          
-    Y = ceil(mean(points(2,:)));
-    N = (Y-1)*grid + X;
 end
