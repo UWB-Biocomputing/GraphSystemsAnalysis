@@ -27,7 +27,7 @@ originBin = 10;
 
 % find brightest pixel (neuron that spikes the most in a time bin)
 brightestPixel = max(frame(:,originBin));      % originBin starts at 10
-% using 2 as the threshold for brightest pixel to 
+% using 2 as the threshold for brightest pixel 
 while (brightestPixel < 2)
     originBin = originBin + 1;
     % finds largest element in each column of a frame, starting at column 10
@@ -35,7 +35,8 @@ while (brightestPixel < 2)
 end
 
 % The number of brightest pixel within a column is limited to 2 
-% so the mean position do not deviate significantly. 
+% so the mean position do not deviate significantly for situations where there
+% are multiple burst happening simutaneously.
 % Therefore, we use find here to only get the first 2 index.
 brightestPixelIndexes = find(frame(:,originBin)==brightestPixel, 2);           % finds and store the brightest pixel index with the bin it is in
 

@@ -39,16 +39,16 @@ function getBinnedBurstInfo(h5dir)
 % line below is used for testing
 % h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'        
 
-% The h5info call below for neuronTypesFileInformation will get file information like:
+% The h5info call below for neuronTypes will get file information like:
 %   Filename    - contains the filepath; it would be the same as h5dir
 %   Name        - in this case is neuronTypes, the name of the field you want
 %   Datatype    - array of structures describing datatypes stored in neuronTypes
 %               - this struct has Name, Class, Type, Size, Attributes as its fields
 %   Dataspace   - array of structures describing the size of the dataset
 %               - this struct has Size, MaxSize, Type as its fields
-neuronTypesFileInformation = h5info([h5dir '.h5'],'/neuronTypes');
+neuronTypes = h5info([h5dir '.h5'],'/neuronTypes');
+nNeurons = neuronTypes.Dataspace.Size;                              % gets size of the array neuronTypes
 
-nNeurons = neuronTypesFileInformation.Dataspace.Size;               % gets size of the array neuronTypes
 % Assume each bin is 10ms
 spikesPerBin = double(h5read([h5dir '.h5'], '/spikesHistory'));
 spikesPerNeuronPerBin = spikesPerBin/nNeurons;                      % spikes/neuron per bin 
@@ -58,6 +58,7 @@ spikesPerNeuronPerBin = spikesPerBin/nNeurons;                      % spikes/neu
 %   - for 10ms (0.01s) bin, burst threshold = 0.5x0.01 = 0.005
 adjustedBurstThreshold = 0.005;                                                % burst threashold adjusted for 10ms Bin
 binsAboveThreshold = find(spikesPerNeuronPerBin >= adjustedBurstThreshold);    % find index of bins above threshold
+
 % find burst boundaries, if the bins above the threshold is not next to each other 
 % then get their indexes
 burstBoundaries = find(diff(binsAboveThreshold) > 1);               % contain indexes of bins above the threshold
