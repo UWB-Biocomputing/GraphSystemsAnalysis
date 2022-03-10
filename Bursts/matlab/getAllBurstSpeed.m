@@ -40,6 +40,9 @@ outputFile2 = [h5dir '/allBurstSpeed.csv'];     fid2 = fopen(outputFile2, 'w');
 
 % calculate the distance between the most spiked neuron and the origin neuron
 for iBurst = 1:nBursts
+% OLD CODE (reads csv file containing spikerate for each burst)
+    % frameDir = [h5file, '/Binned/burst_', num2str(iBurst), '.csv'];
+    % frame = csvread(frameDir);
     frame = frames.allFrames{[iBurst]};                     % spikerates of a burst
     % NOTE: We already have the brightest pixel for each image/frame at this point,
     %       because that is what the burst origins input entices

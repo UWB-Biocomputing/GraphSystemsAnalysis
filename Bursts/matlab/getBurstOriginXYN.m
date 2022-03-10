@@ -3,17 +3,18 @@
 % the centroid location of neurons that spiked the most in the first 100 
 % timesteps for each burst (brightest pixel in the starting frame)
 %
-%   Syntax: getBurstOriginXY(h5dir)
+%   Syntax: getBurstOriginXYN(h5dir)
 %   
 %   Input:  
 %   frame   -   matrix of spike rates of a burst
 %   xloc    -   array containing all x location of each burst
 %   yloc    -   array containing all y location of each burst
+%   
+%   Return: 
+%   X   - x location of origin neuron
+%   Y   - y location of origin neuron
+%   N   - neuron number of origin neuron
 %
-%   Output: 
-%   <allBurstOriginXY.csv>  - burst origin (x,y) location for every burst
-%   <allBurstOriginN.csv>   - burst origin neuron number for every burst
-
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Last updated: 02/22/2022  added improvement on performance for file reads
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)

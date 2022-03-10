@@ -98,6 +98,9 @@ for iBurst = 1:nBursts
         end
     end
     allFrames{iBurst} = frame;
+% OLD CODE (writes to a csv file for each burst)
+    %outfile = [h5dir 'Binned/burst_', num2str(i), '.csv'];
+    %csvwrite(outfile, frame);
     fprintf('done with burst:%d/%d\n', iBurst, nBursts);
 end
 

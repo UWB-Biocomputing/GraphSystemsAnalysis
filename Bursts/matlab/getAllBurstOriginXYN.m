@@ -2,7 +2,7 @@
 % Read <burstInfo.csv> and get burst origin locations for all bursts
 % by calling getBurstOriginXYN()
 %
-%   Syntax: getBurstOriginXY(h5dir)
+%   Syntax: getAllBurstOriginXYN(h5dir)
 %   
 %   Input:  
 %   h5dir   -   BrainGrid result filename (e.g. tR_1.0--fE_0.90_10000)
@@ -48,8 +48,12 @@ yloc = h5read([h5dir '.h5'], '/yloc');
 
 % Calculate burst origin based on spikerates at each x and y location     
 for iBurst = 1:nBursts
+% OLD CODE (reads csv file containing spikerate for each burst)
+    % frameDir = [h5file, '/Binned/burst_', num2str(iBurst), '.csv'];
+    % frame = csvread(frameDir);
+
     frame = frames.allFrames{iBurst};                 % spikerates
-    
+
     % Gets centroid of neurons with the brightest pixel (highest spikerate)
     % by calculating the mean of neurons that produced the most spikes within 10ms.
     % What returns are the X and Y location and Neuron number
