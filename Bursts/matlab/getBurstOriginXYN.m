@@ -3,7 +3,7 @@
 % the centroid location of neurons that spiked the most in the first 100 
 % timesteps for each burst (brightest pixel in the starting frame)
 %
-%   Syntax: getBurstOriginXYN(h5dir)
+%   Syntax: [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
 %   
 %   Input:  
 %   frame   -   matrix of spike rates of a burst
