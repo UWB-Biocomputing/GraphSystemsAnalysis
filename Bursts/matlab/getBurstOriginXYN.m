@@ -1,40 +1,52 @@
-%GETBURSTORIGINXYN return burst origin  (X,Y) and neuron number N
-%Read <binnedBurstInfo.csv> and retrieve burst x,y origin by calculating 
-%the centroid location of neurons that spiked the most in the first 100 
-%timesteps for each burst (brightest pixel in the starting frame)
+% GETBURSTORIGINXYN return burst origin  (X,Y) and neuron number N
+% Read <binnedBurstInfo.csv> and retrieve burst x,y origin by calculating 
+% the centroid location of neurons that spiked the most in the first 100 
+% timesteps for each burst (brightest pixel in the starting frame)
 %
-%   Syntax: getBurstOriginXY(h5file)
+%   Syntax: [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
 %   
 %   Input:  
-%   h5file  - BrainGrid result filename (e.g. tR_1.0--fE_0.90_10000)
+%   frame   -   matrix of spike rates of a burst
+%   xloc    -   array containing all x location of each burst
+%   yloc    -   array containing all y location of each burst
+%   
+%   Return: 
+%   X   - x location of origin neuron
+%   Y   - y location of origin neuron
+%   N   - neuron number of origin neuron
 %
-%   Output: 
-%   <allBurstOriginXY.csv> - burst origin (x,y) location for every burst
-%   <allBurstOriginN.csv> - burst origin neuron number for every burst
-
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 4/18/2018
-function [X, Y, N] = getBurstOriginXYN(h5file, o_bin, id)
-burstfile = [h5file, '/Binned/burst_', num2str(id), '.csv'];
-frames = csvread(burstfile);    
-xloc = hdf5read([h5file '.h5'], 'xloc');        % x location
-yloc = hdf5read([h5file '.h5'], 'yloc');        % y location
-grid = sqrt(length(xloc));                    	% grid size 
+% Last updated: 02/22/2022  added improvement on performance for file reads
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+
+function [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
+% NOTE: assume square grid size
+grid = sqrt(length(xloc));
+
+% starts at 10 to leave room for start of movie before beginning of burst
+originBin = 10;
+
 % find brightest pixel (neuron that spikes the most in a time bin)
-largest = max(frames(:,o_bin)); 
-while (largest < 2)  
-    o_bin = o_bin + 1;
-    largest = max(frames(:,o_bin)); 
+brightestPixel = max(frame(:,originBin));      % originBin starts at 10
+% using 2 as the threshold for brightest pixel 
+while (brightestPixel < 2)
+    originBin = originBin + 1;
+    % finds largest element in each column of a frame, starting at column 10
+    brightestPixel = max(frame(:,originBin));
 end
-indexes = find(frames(:,o_bin)==largest, 2);
-n = length(indexes);
-points = zeros(2,n);
-for j = 1:n
-    points(1,j) = xloc(indexes(j))+1;   % index starts at 0 in BG
-    points(2,j) = yloc(indexes(j))+1;   % matlab start from 1, so +1
-end
-    % get centroid of neurons with max value
-    X = ceil(mean(points(1,:)));          
-    Y = ceil(mean(points(2,:)));
-    N = (Y-1)*grid + X;
+
+% The number of brightest pixel within a column is limited to 2 
+% so the mean position do not deviate significantly for situations where there
+% are multiple burst happening simutaneously.
+% Therefore, we use find here to only get the first 2 index.
+brightestPixelIndexes = find(frame(:,originBin)==brightestPixel, 2);           % finds and store the brightest pixel index with the bin it is in
+
+points(1,iBrightestPixel) = xloc(brightestPixelIndexes(iBrightestPixel))+1;     % index starts at 0 in BG
+points(2,iBrightestPixel) = yloc(brightestPixelIndexes(iBrightestPixel))+1;     % matlab start from 1, so +1
+
+% get centroid of neurons with max value
+X = ceil(mean(points(1,:)));          
+Y = ceil(mean(points(2,:)));
+N = (Y-1)*grid + X;
+
 end

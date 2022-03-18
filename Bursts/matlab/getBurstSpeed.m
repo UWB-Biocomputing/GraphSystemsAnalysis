@@ -1,46 +1,62 @@
-%GETBURSTSPEED return burst propagation speed (unit: neurons/ms)
-%Read burst frames (from getBurstSpikes) and calculate propagation speed by
-%finding the distance between the most-spiked-neuron (brightest pixel in 
-%the frame) and origin-neuron, this distance divided by number of bins away 
-%from origin bin (default is 10) is the burst speed. 
+% GETBURSTSPEED return burst propagation speed (unit: neurons/ms)
+% Read burst frame (from getBurstSpikes) and calculate propagation speed by
+% finding the distance between the most-spiked-neuron (brightest pixel in 
+% the frame) and origin-neuron, this distance divided by number of bins away 
+% from origin bin (default is 10) is the burst speed. 
 % 
 %   Syntax: [speed, m_speed] = getBurstSpeed(h5file, id, origin)
 %   
 %   Input:  
-%   h5file  - BrainGrid result filename (e.g. tR_1.0--fE_0.90_10000)
-%   id      - burst ID
-%   origin  - burst origin location (neuron number)
-%
+%   frame   -   matrix of spike rates of a burst
+%   origin  -   burst origin location (neuron number)
+%   xloc    -   array containing all neuron x locations
+%   yloc    -   array containing all neuron y locations
+%   
 %   Return: 
 %   speed   - propagation speed for every bin
 %   m_speed - mean burst speed
-
+%
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 5/9/2018
-function [speed, m_speed] = getBurstSpeed(h5dir, id, origin)
-burstfile = [h5dir, '/Binned/burst_', num2str(id), '.csv'];
-frames = csvread(burstfile);  
-o_bin = 10;                 % origin bin
-s_bin = o_bin+2;            % avoid bins when burst just start
-e_bin = size(frames,2)-2;   % avoid bins when burst propogate to edges
-while (e_bin - s_bin) < 1 && e_bin < size(frames,2)
-    e_bin = e_bin + 1;
-    s_bin = s_bin - 1;
-end
-unit = 10;                  % convert unit to distance/ms
-speed = zeros(e_bin-s_bin,1);
+% Last updated: 2/22/2022   added documentation and removed unnecessary file reads
+% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
-for i = 1:e_bin-s_bin
-    b = i+s_bin;  
-    t = b-o_bin;
-    largest = max(frames(:,b));
-    idx = find(frames(:,b)==largest, 2);
-    n = length(idx);
-    d = zeros(n,1);
+function [speed, m_speed] = getBurstSpeed(frame, origin, xloc, yloc)
+originBin = 10;
+startBin = originBin+2;            % avoid bins when burst just start
+edgeBin = size(frame,2)-2;    % avoid bins when burst propogate to edges
+
+% to be added in future to replace while loop below
+%{ 
+ if edgeBin - startBin < 1
+    speed = nan;
+    m_speed = nan;
+    return;
+end 
+%}
+
+% to be remove this b/c the if statement covers it
+% this simply increases the size of the bins we're working with
+while (edgeBin - startBin) < 1 && edgeBin < size(frame,2)      
+    edgeBin = edgeBin + 1;
+    startBin = startBin - 1;
+end
+
+unit = 10;                              % convert unit to distance/ms
+speed = zeros(edgeBin-startBin,1);
+
+% calculate speed of burst using distance between most spiked neuron and origin neuron
+for i = 1:edgeBin-startBin
+    currentBin = i+startBin;     % current bin
+    t = currentBin-originBin;    % bin since start of burst
+    largest = max(frame(:,currentBin));
+    brightestPixelIndexes = find(frame(:,currentBin)==largest, 2);         % index of neurons with the highest spikerate
+    n = length(brightestPixelIndexes);
+    distance = zeros(n,1);
+    % Finds the distance between the brightest pixel for each image/frame and the origin.
     for j = 1:n
-        d(j) = getDistance(origin,idx(j));  
+        distance(j) = getDistance(origin,brightestPixelIndexes(j),xloc,yloc);  
     end
-    speed(i) = mean(d)/t/unit; 
+    speed(i) = mean(distance)/t/unit; 
 end
     m_speed = mean(speed);
 end
