@@ -19,11 +19,11 @@ ylabel('Burst y location')
 figure(2);
 clf
 subplot(2,1,1);
-plot([analysisStart:analysisEnd],origins([analysisStart:analysisEnd],1));
+plot([analysisStart:analysisEnd],origins([analysisStart:analysisEnd],1), '.');
 px = gca;
 ylabel('Burst x location');
 subplot(2,1,2);
-plot([analysisStart:analysisEnd],origins([analysisStart:analysisEnd],2));
+plot([analysisStart:analysisEnd],origins([analysisStart:analysisEnd],2), '.');
 py = gca;
 xlabel('Burst number');
 ylabel('Burst y location');
@@ -53,12 +53,15 @@ view(39, 48);
 % 3D
 figure(4)
 clf
-plot3(origins([analysisStart:analysisEnd],1), ...
-    origins([analysisStart:analysisEnd],2), ...
-    [analysisStart:analysisEnd])
-xlabel('Burst x location')
-ylabel('Burst y location')
-zlabel('Burst number')
+plot3([analysisStart:analysisEnd], ...
+    origins([analysisStart:analysisEnd],1), ...
+    origins([analysisStart:analysisEnd],2), '.')
+box on
+ax = gca;
+ax.BoxStyle = 'full';
+ylabel('Burst x location')
+zlabel('Burst y location')
+xlabel('Burst number')
 % 
 % Univariate return maps
 mapOrder = 1;
