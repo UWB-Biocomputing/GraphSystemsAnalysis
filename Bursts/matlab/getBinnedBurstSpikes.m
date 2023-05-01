@@ -18,8 +18,8 @@
 %   Syntax: getBinnedBurstSpikes(h5dir)
 %   
 %   Input:  
-%   h5dir   -   BrainGrid simulation file (.h5)
-%               the entire path is required for example
+%   h5dir   -   BrainGrid dataset name (.h5)
+%               the entire path can be used; for example
 %               '/CSSDIV/research/biocomputing/data/tR_1.90--fE_0.90'
 %
 %   Output: 
@@ -29,16 +29,15 @@
 % Last updated: 02/22/2022  added documentation and changed output filetype to a single .mat file
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
-function getBinnedBurstSpikes(h5dir)
-% h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90';             
-if ~exist([h5dir '/Binned'], 'dir')
-       mkdir([h5dir '/Binned'])
-end
+function getBinnedBurstSpikes(datasetName)
+
 head = 10;                      % number of bins before burst start bin,     start video before beginning of burst
 tail = 0;                       % number of bins after burst end bin,        end video at last bin of burst
 frameDuration = 100;            % one frame = 100 bin
-spikesProbedNeurons = (h5read([h5dir '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
-binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];
+fprintf('Starting read of spikes from HDF5 file...');
+spikesProbedNeurons = (h5read([datasetName '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
+fprintf(' done\n');
+binnedBurstInfoFilePath = [datasetName '/allBinnedBurstInfo.csv'];
 
 % skipping the first column containing the burst ID, and the first row containing the names of the columns
 burstInfo = csvread(binnedBurstInfoFilePath,1,1);    % read file with row offset by 1 and column offset by 1
@@ -66,7 +65,12 @@ timeStepSize = .1;                      % 0.1ms per time step
 binPerTimeStep = binSize/timeStepSize;  % 10/.1 = 100
 allFrames = cell(1,nBursts);            % This stores all the frames produced by the loop below
 
+% Get the analysis start time
+fprintf('Starting analysis...\n')
+allStartTime = tic;
 for iBurst = 1:nBursts
+    % Get the current burst start time
+    curBurstStartTime = tic;
     % Preallocate for a (number of neurons x width of bin) matrix used to store the output
     % The width of bin will differ depending on the burst ID (iburst)
     % A width is the number of bins in between each burst
@@ -83,25 +87,34 @@ for iBurst = 1:nBursts
     % search spike time for each neuron (a column in spikesProbedNeurons is one neuron)
     for jNeuron = 1:nNeurons 
         % find index of first non-zero element in column jNeuron that is >= startingTimeStep
-        start = find(spikesProbedNeurons(:,jNeuron) >= startingTimeStep, 1); 
+        start = find(spikesProbedNeurons(:,jNeuron) >= startingTimeStep, 1);
         % if index exist, meaning start is not empty, then starting from that index 
-        if isempty(start) == 0              
+        if ~isempty(start)
             for k = start:ended
-                if ((spikesProbedNeurons(k,jNeuron) >= startingTimeStep) && (spikesProbedNeurons(k,jNeuron) <= endingTimeStep))
+                curSpikeTime = spikesProbedNeurons(k,jNeuron);
+                if ((curSpikeTime >= startingTimeStep) && (curSpikeTime <= endingTimeStep))
                     % 10 ms in one frame -> 100 time step
-                    col = fix(((spikesProbedNeurons(k,jNeuron)-startingTimeStep))/frameDuration)+1;
+                    col = fix(((curSpikeTime-startingTimeStep))/frameDuration)+1;
                     frame(jNeuron,col) = frame(jNeuron,col)+1;              
-                elseif ((spikesProbedNeurons(k,jNeuron) > endingTimeStep) || (spikesProbedNeurons(k,jNeuron) == 0))
+                elseif ((curSpikeTime > endingTimeStep) || (curSpikeTime == 0))
                     break;
                 end 
             end
         end
     end
     allFrames{iBurst} = frame;
-% OLD CODE (writes to a csv file for each burst)
-    %outfile = [h5dir 'Binned/burst_', num2str(i), '.csv'];
-    %csvwrite(outfile, frame);
-    fprintf('done with burst:%d/%d\n', iBurst, nBursts);
+
+    % Calculate statistics to give user feedback
+    curBurstElapsedTime = toc(curBurstStartTime);
+    curTotalElapsedTime = toc(allStartTime);
+    fractionBurstsDone = iBurst/nBursts;
+    averageTimePerBurst = curTotalElapsedTime/iBurst;
+    totalEstimatedTime = averageTimePerBurst * nBursts;
+    remainingEstimatedTime = totalEstimatedTime - curTotalElapsedTime;
+
+    fprintf('\tdone with burst:%d/%d (%.1f%%) in %.1f sec (%.1f remaining)\n', ...
+        iBurst, nBursts, fractionBurstsDone*100, curBurstElapsedTime, ...
+        remainingEstimatedTime);
 end
 
-save([h5dir '/allFrames.mat'],'allFrames')
+save([datasetName '/allFrames.mat'],'allFrames','-v7.3');

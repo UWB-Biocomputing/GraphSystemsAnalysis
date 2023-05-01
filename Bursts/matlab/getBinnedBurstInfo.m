@@ -22,8 +22,8 @@
 %   Syntax: getBinnedBurstInfo(h5dir)
 %   
 %   Input:  
-%   h5dir   -   BrainGrid simulation file (e.g. tR_1.0--fE_0.90_10000)
-%               the entire path is required for example
+%   datasetName BrainGrid dataset (e.g. tR_1.0--fE_0.90_10000)
+%               the entire path can be used; for example
 %               '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
 %
 %   Output:  
@@ -35,7 +35,7 @@
 % Last updated: 02/10/2022 added Documentation, cleaned redundant code
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
-function getBinnedBurstInfo(h5dir)
+function getBinnedBurstInfo(datasetName)
 % line below is used for testing
 % h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'        
 
@@ -46,11 +46,11 @@ function getBinnedBurstInfo(h5dir)
 %               - this struct has Name, Class, Type, Size, Attributes as its fields
 %   Dataspace   - array of structures describing the size of the dataset
 %               - this struct has Size, MaxSize, Type as its fields
-neuronTypes = h5info([h5dir '.h5'],'/neuronTypes');
+neuronTypes = h5info([datasetName '.h5'],'/neuronTypes');
 nNeurons = neuronTypes.Dataspace.Size;                              % gets size of the array neuronTypes
 
 % Assume each bin is 10ms
-spikesPerBin = double(h5read([h5dir '.h5'], '/spikesHistory'));
+spikesPerBin = double(h5read([datasetName '.h5'], '/spikesHistory'));
 spikesPerNeuronPerBin = spikesPerBin/nNeurons;                      % spikes/neuron per bin 
 
 % In Kawasaki, F. & Stiber, M. (2014): 
@@ -68,7 +68,7 @@ burstBoundaries = [burstBoundaries; length(binsAboveThreshold)];    % boundary c
 previousPeak = 0;
 
 % Output file
-fid = fopen([h5dir '/allBinnedBurstInfo.csv'], 'w') ;         
+fid = fopen([datasetName '/allBinnedBurstInfo.csv'], 'w') ;         
 fprintf(fid, ['ID,startBin#,endBin#,width(bins),totalSpikeCount,'... 
               'peakBin,peakHeight(spikes),Interval(bins)\n']);
 for iBurst = 1:nBursts
