@@ -1,14 +1,14 @@
 % GETBURSTORIGINXYN return burst origin  (X,Y) and neuron number N
 % Read <binnedBurstInfo.csv> and retrieve burst x,y origin by calculating 
-% the centroid location of neurons that spiked the most in the first 100 
-% timesteps for each burst (brightest pixel in the starting frame)
+% the centroid location of neurons that spiked the most in early 
+% in a burst (brightest pixel in the starting frame)
 %
 %   Syntax: [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
 %   
 %   Input:  
-%   frame   -   matrix of spike rates of a burst
-%   xloc    -   array containing all x location of each burst
-%   yloc    -   array containing all y location of each burst
+%   frame   -   matrix of neuron spike counts in a burst
+%   xlocs   -   array containing all x location of each burst
+%   ylocs   -   array containing all y location of each burst
 %   
 %   Return: 
 %   X   - x location of origin neuron
@@ -16,37 +16,65 @@
 %   N   - neuron number of origin neuron
 %
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 02/22/2022  added improvement on performance for file reads
-% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: 02/22/2022  added improvement on performance for file reads
+% Updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: May 2023 minor tweaks
+% Updated by: Michael Stiber
 
-function [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc)
-% NOTE: assume square grid size
-grid = sqrt(length(xloc));
+function [x, y, n] = getBurstOriginXYN(frame, xlocs, ylocs)
+% NOTE: assumes square grid size
+grid = sqrt(length(xlocs));
 
-% starts at 10 to leave room for start of movie before beginning of burst
-originBin = 10;
+% starts at 10 to leave room for beginning of burst
+theBin = 10;
 
-% find brightest pixel (neuron that spikes the most in a time bin)
-brightestPixel = max(frame(:,originBin));      % originBin starts at 10
-% using 2 as the threshold for brightest pixel 
-while (brightestPixel < 2)
-    originBin = originBin + 1;
-    % finds largest element in each column of a frame, starting at column 10
-    brightestPixel = max(frame(:,originBin));
+% find the maximum number of spikes by any neuron in the bin
+maxSpikes = max(frame(:,theBin));      % theBin starts at 10
+% using 2 as the threshold for brightest pixel (wait until burst is big
+% enough)
+while (maxSpikes < 2)
+    theBin = theBin + 1;
+    % finds largest element in theBin
+    maxSpikes = max(frame(:,theBin));
 end
 
-% The number of brightest pixel within a column is limited to 2 
-% so the mean position do not deviate significantly for situations where there
-% are multiple burst happening simutaneously.
-% Therefore, we use find here to only get the first 2 index.
-brightestPixelIndexes = find(frame(:,originBin)==brightestPixel, 2);           % finds and store the brightest pixel index with the bin it is in
+% Get the neurons that have the max number of spikes
+maxSpikingNeurons = find(frame(:,theBin)==maxSpikes);
 
-points(1,iBrightestPixel) = xloc(brightestPixelIndexes(iBrightestPixel))+1;     % index starts at 0 in BG
-points(2,iBrightestPixel) = yloc(brightestPixelIndexes(iBrightestPixel))+1;     % matlab start from 1, so +1
+initialNeurons = length(maxSpikingNeurons);
+
+% There could be multiple clusters. Let's find the largest one using a
+% simple greedy algorithm. Iterate over the neurons; find the "distance"
+% from it to all others (here, we are just going to use difference in
+% neuron ID mod the grid). Given a threshold for "close", count the number
+% of neurons that are close or far and only keep this neuron if the number
+% of close neurons is greater than the number of far neurons.
+%
+% This will break if there are many clusters; it assumes that there is one
+% cluster with more neurons than all other clusters combined. (Well,
+% actually, if that is the case, the neuron with the highest index will end
+% up as the origin.)
+i = 1;
+while i <= length(maxSpikingNeurons)
+    diffNs = mod(abs(maxSpikingNeurons(i) - maxSpikingNeurons),grid);
+    numClose = length(find(diffNs <= 10));
+    % if there aren't enough close neurons, remove this one from the list
+    if numClose < length(maxSpikingNeurons) - numClose
+        maxSpikingNeurons(i) = [];
+    else
+        i = i + 1;
+    end
+end
+
+assert(length(maxSpikingNeurons) > 0);
+
+if initialNeurons > 1 & length(maxSpikingNeurons) == 1
+    fprintf('Warning: number of neurons arbitrarily reduced to one.\n')
+end
 
 % get centroid of neurons with max value
-X = ceil(mean(points(1,:)));          
-Y = ceil(mean(points(2,:)));
-N = (Y-1)*grid + X;
+x = ceil(mean(xlocs(maxSpikingNeurons)));          
+y = ceil(mean(ylocs(maxSpikingNeurons)));
+n = y*grid + x;
 
 end

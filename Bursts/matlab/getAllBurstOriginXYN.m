@@ -19,8 +19,10 @@
 %   <allBurstOriginN.csv>   - burst origin neuron number for every burst
 %   
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 02/22/2022 added improvement on performance for file reads
-% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: 02/22/2022 added improvement on performance for file reads
+% Updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: May 2023 minor tweaks
+% Updated by: Michael Stiber
 
 function getAllBurstOriginXYN(h5dir)
 % Input file paths
@@ -30,37 +32,30 @@ framesFilePath = [h5dir '/allFrames.mat'];      % array of matrixes containing t
 % Input file data
 burstInfo = csvread(binnedBurstInfoFilePath,1,1);   % only used to get number of burst (could be removed if there's a way to do it without csvread)
 % This is a cell array containing spike rate of each burst. The spike rates are stored in
-% a matrix where the columns corresponds to each neuron and row corresponds to the timestep.
+% a matrix where the rows correspond to each neuron and columns corresponds to the time bin.
 % NOTE: variable name for accessing the spike rates of specific burst is allFrames.
-% example: frames.allFrames{burst number}
-frames = load(framesFilePath);                      
+% example: allFrames{burst number}
+load(framesFilePath, 'allFrames');
 
 % Number of bursts
 nBursts = size(burstInfo,1);             
 
 % Output files
-outputFile1 = [h5dir '/allBurstOriginN.csv']; fid1 = fopen(outputFile1, 'w');       % array containing origin neuron
-outputFile2 = [h5dir '/allBurstOriginXY.csv']; fid2 = fopen(outputFile2, 'w');      % array containing x and y location of origin neuron
+originFileName = [h5dir '/allBurstOrigin.csv'];
+originFile = fopen(originFileName, 'w');
 
 % Get x and y location of neurons
-xloc = h5read([h5dir '.h5'], '/xloc');
-yloc = h5read([h5dir '.h5'], '/yloc');
+xlocs = h5read([h5dir '.h5'], '/xloc');
+ylocs = h5read([h5dir '.h5'], '/yloc');
 
 % Calculate burst origin based on spikerates at each x and y location     
 for iBurst = 1:nBursts
-% OLD CODE (reads csv file containing spikerate for each burst)
-    % frameDir = [h5file, '/Binned/burst_', num2str(iBurst), '.csv'];
-    % frame = csvread(frameDir);
+    frame = allFrames{iBurst};  % Spike counts for each neuron and each bin in burst
 
-    frame = frames.allFrames{iBurst};                 % spikerates
-
-    % Gets centroid of neurons with the brightest pixel (highest spikerate)
-    % by calculating the mean of neurons that produced the most spikes within 10ms.
+    % Gets centroid of neurons with the highest spike count
     % What returns are the X and Y location and Neuron number
-    [X, Y, N] = getBurstOriginXYN(frame, xloc, yloc);
-    fprintf(fid1, '%d\n', N);  
-    fprintf(fid2, '%d, %d\n', X, Y);  
+    [x, y, n] = getBurstOriginXYN(frame, xlocs, ylocs);
+    fprintf(originFile, '%d, %d, %d\n', x, y, n);
 end
-fclose(fid1);
-fclose(fid2);
+fclose(originFile);
 end

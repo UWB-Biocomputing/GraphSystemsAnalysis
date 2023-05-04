@@ -4,8 +4,8 @@
 %   Syntax: [speed, m_speed] = getBurstSpeed(h5dir, id, origin)
 %   
 %   Input:  
-%   h5dir   -   BrainGrid result filename (e.g. tR_1.0--fE_0.90_10000)
-%               the entire path is required for example
+%   h5dir   -   Graphitti result filename (e.g. tR_1.0--fE_0.90)
+%               the entire path may be required, for example
 %               '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'
 %   frame   -   matrix of spike rates of a burst
 %   origin  -   burst origin location (neuron number)
@@ -17,19 +17,20 @@
 %   <allBurstSpeed.csv>         - all speeds between bins 
 
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
-% Last updated: 2/22/2022   added documentation and removed unnecessary file reads
-% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: 2/22/2022   added documentation and removed unnecessary file reads
+% Updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: May 2023 minor tweaks
+% Updated by: Michael Stiber
 
 function getAllBurstSpeed(h5dir)
-% Input file paths
-framesFilePath = [h5dir '/allFrames.mat'];
 
-% Input file data
+% Get origin neurons
 burstOrigins = csvread([h5dir '/allBurstOriginN.csv']);
-frames = load(framesFilePath);
+% Get binned neuron spike counts
+frames = load([h5dir '/allFrames.mat']);
 % Get x and y location of neurons
-xloc = h5read([h5dir '.h5'], '/xloc');
-yloc = h5read([h5dir '.h5'], '/yloc');
+xlocs = h5read([h5dir '.h5'], '/xloc');
+ylocs = h5read([h5dir '.h5'], '/yloc');
 
 % Number of Bursts
 nBursts = size(burstOrigins,1);
@@ -43,10 +44,10 @@ for iBurst = 1:nBursts
 % OLD CODE (reads csv file containing spikerate for each burst)
     % frameDir = [h5file, '/Binned/burst_', num2str(iBurst), '.csv'];
     % frame = csvread(frameDir);
-    frame = frames.allFrames{[iBurst]};                     % spikerates of a burst
+    frame = frames.allFrames{iBurst}; % per-neuron spike counts for this burst
     % NOTE: We already have the brightest pixel for each image/frame at this point,
-    %       because that is what the burst origins input entices
-    [S, M] = getBurstSpeed(frame, burstOrigins(iBurst), xloc, yloc);  
+    %       because that is what the burst origin is
+    [S, M] = getBurstSpeed(frame, burstOrigins(iBurst), xlocs, ylocs);  
     fprintf(fid1, '%.4f\n', M);  
     % TO BE ADDED if [S, M] is nan , output nan for the mean but not the detail
     n = length(S);

@@ -26,14 +26,16 @@
 %   <allFrames.mat>  - collection of flattened image arrays of a burst
 %
 % Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
-% Last updated: 02/22/2022  added documentation and changed output filetype to a single .mat file
-% Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: 02/22/2022  added documentation and changed output filetype to a single .mat file
+% Updated by: Vu T. Tieu (vttieu1995@gmail.com)
+% Updated: May 2023 minor tweaks
+% Updated by: Michael Stiber
 
 function getBinnedBurstSpikes(datasetName)
 
 head = 10;                      % number of bins before burst start bin,     start video before beginning of burst
 tail = 0;                       % number of bins after burst end bin,        end video at last bin of burst
-frameDuration = 100;            % one frame = 100 bin
+
 fprintf('Starting read of spikes from HDF5 file...');
 spikesProbedNeurons = (h5read([datasetName '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
 fprintf(' done\n');
@@ -45,24 +47,24 @@ nBursts = size(burstInfo,1);                         % number of bursts identifi
 
 % ended gets the number of row; nNeurons gets the number of columns/neurons
 % (NOTE:    spikesProbedNeuron when read has columns as the number of neurons and rows 
-%           as the time step)
+%           as the number of time steps)
 [ended, nNeurons] = size(spikesProbedNeurons);
 
 % ------------------------------------------------------------------------
 % Get spike info from spikesProbedNeurons for each burst
 % ------------------------------------------------------------------------
 % Every column in "frame" is a flatten image vector represents 100x100 
-% image (Matlab is column-major). A cell within a "frame" represents the spikerate
+% image (Matlab is column-major). An element within a "frame" represents the spikerate
 % at that x and y location. A "frame" could be understood as a collection of spikerates.
 % To see what triggers a burst, save 10 extra bins before burst starts.
 % The spikerate is produced using the method called spike train binning where the spike count
 % at each x and y location is concatenated(summed) and compressed from 100 time steps.
-% Each frame is then saved in one single .mat file for better performance.
-% (NOTE:    bin size = 10ms, time step size = 0.1 ms)
+% Frames are assembled into a cell array and then saved in one single .mat file for better performance.
+% (NOTE:   default bin size = 10ms, time step size = 0.1 ms)
 % ------------------------------------------------------------------------
 binSize = 10;                           % 10ms per bin
-timeStepSize = .1;                      % 0.1ms per time step
-binPerTimeStep = binSize/timeStepSize;  % 10/.1 = 100
+timeStepSize = 0.1;                     % 0.1ms per time step
+timeStepsPerBin = binSize/timeStepSize; % 10/0.1 = 100 in the above case
 allFrames = cell(1,nBursts);            % This stores all the frames produced by the loop below
 
 % Get the analysis start time
@@ -71,18 +73,17 @@ allStartTime = tic;
 for iBurst = 1:nBursts
     % Get the current burst start time
     curBurstStartTime = tic;
-    % Preallocate for a (number of neurons x width of bin) matrix used to store the output
-    % The width of bin will differ depending on the burst ID (iburst)
-    % A width is the number of bins in between each burst
+    % Preallocate for a (number of neurons x number of bins) matrix used to store the output
+    % The number of bins will differ depending on the burst ID (iburst)
     frame = zeros(nNeurons, burstInfo(iBurst,3) + head + tail, 'uint16');
     
-    % get burst info from 10 bins before burst
+    % get burst spikes from 10 bins before burst
     % converting start bin and end bin of each burst from allBinnedBurstInfo.csv
     % start and end bin is the bin that the burst starts and ends at
-    burstStartBinNum = burstInfo(iBurst,1);     % the bin that this burst start, detected by
-    burstEndBinNum   = burstInfo(iBurst,2);     % the bin that this burst ends
-    startingTimeStep = (burstStartBinNum - head + 1) * binPerTimeStep;        % start bin# -> start time step
-    endingTimeStep   = (burstEndBinNum + tail) * binPerTimeStep;              % end bin# -> end time step  
+    burstStartBinNum = burstInfo(iBurst,1);     % starting bin
+    burstEndBinNum   = burstInfo(iBurst,2);     % ending bin
+    startingTimeStep = (burstStartBinNum - head + 1) * timeStepsPerBin;        % start bin# -> start time step
+    endingTimeStep   = (burstEndBinNum + tail) * timeStepsPerBin;              % end bin# -> end time step  
     
     % search spike time for each neuron (a column in spikesProbedNeurons is one neuron)
     for jNeuron = 1:nNeurons 
@@ -93,9 +94,11 @@ for iBurst = 1:nBursts
             for k = start:ended
                 curSpikeTime = spikesProbedNeurons(k,jNeuron);
                 if ((curSpikeTime >= startingTimeStep) && (curSpikeTime <= endingTimeStep))
-                    % 10 ms in one frame -> 100 time step
-                    col = fix(((curSpikeTime-startingTimeStep))/frameDuration)+1;
-                    frame(jNeuron,col) = frame(jNeuron,col)+1;              
+                    % spike falls within burst; determine which bin
+                    bin = fix(((curSpikeTime-startingTimeStep))/timeStepsPerBin)+1;
+                    % we're just counting the number of spikes for this
+                    % neuron and bin
+                    frame(jNeuron,bin) = frame(jNeuron,bin)+1;              
                 elseif ((curSpikeTime > endingTimeStep) || (curSpikeTime == 0))
                     break;
                 end 

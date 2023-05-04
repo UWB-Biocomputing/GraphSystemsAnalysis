@@ -1,6 +1,19 @@
 % Burst origin movement analysis
-origins = csvread('tR_1.9--fE_0.98/allBurstOriginXY.csv');
-%numbursts = size(origins,1);
+% BURSTORIGINMOVEMENT plot sequences of burst origins
+% 
+%   Syntax: burstOriginMovement(h5dir)
+%   
+%   Input:  
+%   h5dir   -   Graphitti result filename (e.g. tR_1.0--fE_0.90)
+%               the entire path may be required, for example
+%               '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'
+%
+%   Output: 
+%   <h5dir-origins.pdf>     - burst origin plot
+
+function burstOriginMovement(h5dir)
+
+origins = readmatrix([h5dir '/allBurstOrigin.csv']);
 
 % Only analyze bursts in this area of interest
 analysisStart = 1;
@@ -30,7 +43,7 @@ for startburst = analysisStart:numbursts:analysisEnd
      yticklabels({})
 end
 
- exportgraphics(t,'../tmp/tR1.9--fE0.98-origins.pdf')
+ exportgraphics(t,[h5dir '-origins.pdf']);
 
 %xlabel('Burst x location')
 %ylabel('Burst y location')
