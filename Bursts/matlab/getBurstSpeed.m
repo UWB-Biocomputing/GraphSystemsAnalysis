@@ -4,17 +4,17 @@
 % the frame) and origin-neuron, this distance divided by number of bins away 
 % from origin bin (default is 10) is the burst speed. 
 % 
-%   Syntax: [speed, m_speed] = getBurstSpeed(h5file, id, origin)
+%   Syntax: [speed, mean] = getBurstSpeed(h5file, id, origin)
 %   
 %   Input:  
 %   frame   -   matrix of spike rates of a burst
-%   origin  -   burst origin location (neuron number)
+%   origin  -   burst origin location (neuron ID)
 %   xloc    -   array containing all neuron x locations
 %   yloc    -   array containing all neuron y locations
 %   
 %   Return: 
-%   speed   - propagation speed for every bin
-%   m_speed - mean burst speed
+%   speed     - propagation speed for every bin
+%   meanSpeed - mean burst speed
 %
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Updated: 2/22/2022   added documentation and removed unnecessary file reads
@@ -22,7 +22,7 @@
 % Updated: May 2023 minor tweaks
 % Updated by: Michael Stiber
 
-function [speed, m_speed] = getBurstSpeed(frame, origin, xlocs, ylocs)
+function [speed, meanSpeed] = getBurstSpeed(frame, origin, xlocs, ylocs)
 originBin = 10;
 startBin = originBin+2;       % avoid bins when burst just starts
 edgeBin = size(frame,2)-2;    % avoid bins when burst propogates to edges
@@ -47,21 +47,21 @@ end
 % in ms
 unit = 10;
 
-% Preallocate speed vector. We will calculate the speed for each frame
+% Preallocate speed vector. We will calculate the speed for each bin
 speed = zeros(edgeBin-startBin+1,1);
 
 % calculate speed of burst using distance between most spiked neuron and origin neuron
 for currentBin = startBin:edgeBin
     t = currentBin-originBin;            % bins since start of burst
-    largest = max(frame(:,currentBin));  % Largest neuron spike count
-    brightestPixelIndices = find(frame(:,currentBin)==largest, 2);         % index of neuron(s) with the highest spikerate
-    originCopies = ones(size(brightestPixelIndices)) * origin;
+    largest = max(frame(:,currentBin));  % Largest neuron spike count in this bin
+    maxCountIndices = find(frame(:,currentBin)==largest);         % index of neuron(s) with the highest spikerate
+    originCopies = ones(size(maxCountIndices)) * (origin+1);      % make sure to convert origin neuron ID to index
     
     % Finds the distances between the brightest pixels and the origin.
-    distances(j) = getDistance(originCopies,brightestPixelIndices,xlocs,ylocs);  
+    distances = getDistances(originCopies,maxCountIndices,xlocs,ylocs);  
 
-    speed(i) = mean(distances)/t/unit; 
+    speed(currentBin) = mean(distances)/t/unit; 
 end
-    m_speed = mean(speed);
+    meanSpeed = mean(speed);
 end
 

@@ -15,8 +15,9 @@
 %   yloc    -   array containing all y location of each burst
 %
 %   Output: 
-%   <allBurstOriginXY.csv>  - burst origin (x,y) location for every burst
-%   <allBurstOriginN.csv>   - burst origin neuron number for every burst
+%   <allBurstOrigin.csv>  - burst origin (x,y) and neuron ID for every burst
+%                           (This is Graphitti neuron ID, i.e.,
+%                           zero-based.)
 %   
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Updated: 02/22/2022 added improvement on performance for file reads
@@ -29,6 +30,7 @@ function getAllBurstOriginXYN(h5dir)
 binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];    
 framesFilePath = [h5dir '/allFrames.mat'];      % array of matrixes containing the spike rates
 
+fprintf('Loading data files... ');
 % Input file data
 burstInfo = csvread(binnedBurstInfoFilePath,1,1);   % only used to get number of burst (could be removed if there's a way to do it without csvread)
 % This is a cell array containing spike rate of each burst. The spike rates are stored in
@@ -36,6 +38,7 @@ burstInfo = csvread(binnedBurstInfoFilePath,1,1);   % only used to get number of
 % NOTE: variable name for accessing the spike rates of specific burst is allFrames.
 % example: allFrames{burst number}
 load(framesFilePath, 'allFrames');
+fprintf('done.\n')
 
 % Number of bursts
 nBursts = size(burstInfo,1);             
@@ -53,9 +56,9 @@ for iBurst = 1:nBursts
     frame = allFrames{iBurst};  % Spike counts for each neuron and each bin in burst
 
     % Gets centroid of neurons with the highest spike count
-    % What returns are the X and Y location and Neuron number
-    [x, y, n] = getBurstOriginXYN(frame, xlocs, ylocs);
-    fprintf(originFile, '%d, %d, %d\n', x, y, n);
+    % What returns are the X and Y location and Neuron ID (zero-based)
+    [x, y, n, bin] = getBurstOriginXYN(frame, xlocs, ylocs);
+    fprintf(originFile, '%d, %d, %d, %d\n', x, y, n, bin);
 end
 fclose(originFile);
 end

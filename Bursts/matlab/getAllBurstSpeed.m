@@ -24,36 +24,31 @@
 
 function getAllBurstSpeed(h5dir)
 
-% Get origin neurons
-burstOrigins = csvread([h5dir '/allBurstOriginN.csv']);
+% Get origins
+burstOrigins = csvread([h5dir '/allBurstOrigin.csv']);
 % Get binned neuron spike counts
-frames = load([h5dir '/allFrames.mat']);
+load([h5dir '/allFrames.mat'], 'allFrames');
 % Get x and y location of neurons
-xlocs = h5read([h5dir '.h5'], '/xloc');
-ylocs = h5read([h5dir '.h5'], '/yloc');
+xlocs = double(h5read([h5dir '.h5'], '/xloc'));
+ylocs = double(h5read([h5dir '.h5'], '/yloc'));
 
 % Number of Bursts
 nBursts = size(burstOrigins,1);
 
 % Output files
-outputFile1 = [h5dir '/allBurstSpeedMean.csv']; fid1 = fopen(outputFile1, 'w');
-outputFile2 = [h5dir '/allBurstSpeed.csv'];     fid2 = fopen(outputFile2, 'w');
+outputFile1 = [h5dir '/allBurstSpeedMean.csv']; meanFile = fopen(outputFile1, 'w');
+outputFile2 = [h5dir '/allBurstSpeed.csv'];     speedsFile = fopen(outputFile2, 'w');
 
 % calculate the distance between the most spiked neuron and the origin neuron
 for iBurst = 1:nBursts
-% OLD CODE (reads csv file containing spikerate for each burst)
-    % frameDir = [h5file, '/Binned/burst_', num2str(iBurst), '.csv'];
-    % frame = csvread(frameDir);
-    frame = frames.allFrames{iBurst}; % per-neuron spike counts for this burst
+    frame = allFrames{iBurst}; % per-neuron spike counts for this burst
     % NOTE: We already have the brightest pixel for each image/frame at this point,
     %       because that is what the burst origin is
-    [S, M] = getBurstSpeed(frame, burstOrigins(iBurst), xlocs, ylocs);  
-    fprintf(fid1, '%.4f\n', M);  
-    % TO BE ADDED if [S, M] is nan , output nan for the mean but not the detail
-    n = length(S);
-    for j = 1:n            % to be remove
-        fprintf(fid2, '%.4f,', S(j)); 
-    end
-     fprintf(fid2, '\n'); 
+    fprintf('Processing burst %d\n', iBurst);
+    [S, m] = getBurstSpeed(frame, burstOrigins(iBurst,3), xlocs, ylocs);  
+    fprintf(meanFile, '%.4f\n', m);  
+    % TODO if [S, m] is nan , output nan for the mean but not the detail
+    fprintf(speedsFile, '%.4f, ', S); 
+    fprintf(speedsFile, '\n'); 
 end
 end
