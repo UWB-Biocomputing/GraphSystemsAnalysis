@@ -38,9 +38,14 @@ for startburst = analysisStart:numbursts:analysisEnd
      endburst = min(startburst+numbursts-1,analysisEnd);
      nexttile
      plot(origins(startburst:endburst,1), ...
-         origins(startburst:endburst,2), '*-','MarkerEdgeColor','k','MarkerFaceColor','k');
-     xticklabels({})
-     yticklabels({})
+         origins(startburst:endburst,2), '*-', ...
+         'MarkerEdgeColor','k','MarkerFaceColor','k');
+     ax = gca;
+     ax.XLim = [0 100];
+     ax.YLim = [0 100];
+     ax.XTick = [];
+     ax.YTick = [];     
+
 end
 
  exportgraphics(t,[h5dir '-origins.pdf']);

@@ -17,6 +17,7 @@ fprintf('done.\n')
 
 numBursts = size(burstOrigins, 1);
 allBurstNums = randperm(numBursts);
+burstsDone = 1;
 
 clf;
 for burst = allBurstNums
@@ -28,7 +29,8 @@ for burst = allBurstNums
     imagesc(f');
     colormap(parula);
     set(gca, 'Box', 'on', 'LineWidth', 1.0, 'XTick', [], 'YTick', []);
-    title(['Burst ' num2str(burst) ' at (' num2str(burstOrigins(burst,1)) ', '...
+    title([num2str(burstsDone/numBursts*100) '%: Burst ' num2str(burst) ...
+        ' at (' num2str(burstOrigins(burst,1)) ', '...
         num2str(burstOrigins(burst,2)) '); bin ' num2str(bin) ...
         ' of ' num2str(size(frame,2)) ' with max value of ' num2str(maxVal) ...
         ' for ' num2str(numMax) ' neurons']);
@@ -37,6 +39,7 @@ for burst = allBurstNums
         'MarkerFaceColor','red', 'MarkerEdgeColor', 'red', 'MarkerSize', 15);
     s = input('Press return for next burst', 's');
     clf;
+    burstsDone = burstsDone +1;
 end
 
 
