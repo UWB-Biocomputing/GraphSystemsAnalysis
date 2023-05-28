@@ -1,54 +1,65 @@
 % Burst origin movement analysis
 % BURSTORIGINMOVEMENT plot sequences of burst origins
-% 
-%   Syntax: burstOriginMovement(h5dir)
-%   
-%   Input:  
-%   h5dir   -   Graphitti result filename (e.g. tR_1.0--fE_0.90)
-%               the entire path may be required, for example
-%               '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'
 %
-%   Output: 
+%   Syntax: burstOriginMovement(h5dir, layoutSize)
+%
+%   Input:
+%   h5dir   -    Graphitti result filename (e.g. tR_1.0--fE_0.90)
+%                the entire path may be required, for example
+%                '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'
+%   layoutSize - Will generate a set of layoutSize x layoutSize graphs
+%
+%   Output:
 %   <h5dir-origins.pdf>     - burst origin plot
 
-function burstOriginMovement(h5dir)
+function burstOriginMovement(h5dir, layoutSize)
 
+% Default layout
+if nargin < 2
+    layoutSize = 5;
+end
+
+% burst origin (x, y), neuron ID, and origin bin # for every burst. (This
+% is Graphitti neuron ID, i.e., zero-based, and (x, y) are also zero-based,
+% ij coordinates))
 origins = readmatrix([h5dir '/allBurstOrigin.csv']);
 
 % Only analyze bursts in this area of interest
 analysisStart = 1;
-% analysisEnd = 500;
-%analysisStart = round(size(origins,1)*0.75);
 analysisEnd = size(origins,1);
 
-% Basic plots
-figure(1)
-clf
-%  plot(origins(analysisStart:analysisEnd,1), ...
-%      origins(analysisStart:analysisEnd,2), '*-');
- 
-layoutsize = 7;
- t = tiledlayout(layoutsize,layoutsize);
- t.Padding = 'tight';
- t.TileSpacing = 'tight';
- numgraphs = layoutsize*layoutsize;
- numbursts = ceil((analysisEnd - analysisStart+1) / numgraphs);
+figure(1);
+clf;
+
+% Set up a tiled layout with no space in between plots
+t = tiledlayout(layoutSize,layoutSize);
+t.Padding = 'tight';
+t.TileSpacing = 'tight';
+
+numgraphs = layoutSize*layoutSize;
+numbursts = ceil((analysisEnd - analysisStart + 1) / numgraphs);
+fprintf('%d bursts per graph (%d total bursts)\n', numbursts, ...
+    analysisEnd - analysisStart+1);
 
 for startburst = analysisStart:numbursts:analysisEnd
-     endburst = min(startburst+numbursts-1,analysisEnd);
-     nexttile
-     plot(origins(startburst:endburst,1), ...
-         origins(startburst:endburst,2), '*-', ...
-         'MarkerEdgeColor','k','MarkerFaceColor','k');
-     ax = gca;
-     ax.XLim = [0 100];
-     ax.YLim = [0 100];
-     ax.XTick = [];
-     ax.YTick = [];     
+    endburst = min(startburst+numbursts-1,analysisEnd);
+    nexttile
+    plot(origins(startburst:endburst,1), ...
+        origins(startburst:endburst,2), '*-', ...
+        'MarkerEdgeColor','k','MarkerFaceColor','k');
+    % Remember, the origins are in Graphitti coordinates
+    axis ij;
+    ax = gca;
+    ax.XLim = [0 100];
+    ax.YLim = [0 100];
+
+    % No room for tick marks
+    ax.XTick = [];
+    ax.YTick = [];
 
 end
 
- exportgraphics(t,[h5dir '-origins.pdf']);
+exportgraphics(t,[h5dir '-origins.pdf']);
 
 %xlabel('Burst x location')
 %ylabel('Burst y location')
@@ -67,7 +78,7 @@ end
 % set(px, 'FontSize', 12);
 % set(py, 'FontSize', 12);
 % %print('originEvolution', '-deps2');
-% 
+%
 % % histograms
 % figure(3)
 % clf
@@ -77,7 +88,7 @@ end
 % subplot(2,1,2)
 % histogram(origins([analysisStart:analysisEnd],2), 20)
 % xlabel('Burst y location')
-% % 
+% %
 % % % Bivariate histogram
 % figure(7)
 % clf
@@ -86,7 +97,7 @@ end
 % xlabel('Burst x location');
 % ylabel('Burst y location');
 % view(39, 48);
-% % 
+% %
 % % 3D
 % figure(4)
 % clf
@@ -99,7 +110,7 @@ end
 % ylabel('Burst x location')
 % zlabel('Burst y location')
 % xlabel('Burst number')
-% % 
+% %
 % % Univariate return maps
 % mapOrder = 1;
 % figure(5)
@@ -114,12 +125,12 @@ end
 %     origins([analysisStart+mapOrder:analysisEnd],2), '*');
 % xlabel('Burst y location i');
 % ylabel(['Burst y location i+', num2str(mapOrder)]);
-% % 
+% %
 % % Convert burst origin locations to polar coordinates, relative to (50, 50)
 % % and then do some more plots
 % originR = sqrt((origins(:,1)-50).^2 + (origins(:,2)-50).^2);
 % originTheta = atan2(origins(:,2)-50, origins(:,1)-50);
-% % 
+% %
 % % Basic plots
 % figure(8)
 % clf
@@ -127,7 +138,7 @@ end
 %     originTheta(analysisStart:analysisEnd), '*-');
 % xlabel('Burst Radius');
 % ylabel('Burst Angle');
-% % 
+% %
 % % Bivariate histogram
 % figure(9)
 % clf
@@ -136,7 +147,7 @@ end
 % xlabel('Burst Radius');
 % ylabel('Burst Angle');
 % view(39, 48);
-% % 
+% %
 % % Look at power spectra
 % figure(10)
 % clf
@@ -155,4 +166,4 @@ end
 % plot([1:length(Y1)-1], Y1(2:end));
 % ylabel('|Y1(f)|');
 % xlabel('f (cycles/150 bursts)');
-% % 
+% %

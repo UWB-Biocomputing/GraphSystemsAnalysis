@@ -6,14 +6,18 @@
 %   Syntax: [x, y, n, bin] = getBurstOriginXYN(frame, xloc, yloc)
 %   
 %   Input:  
-%   frame   -   matrix of neuron spike counts in a burst
-%   xlocs   -   array containing all x location of each burst
-%   ylocs   -   array containing all y location of each burst
+%   frame   -   matrix of neuron spike counts in a burst. A frame has one row
+%               per neuron and one column per time bin.
+%   xlocs   -   array containing all x location of each burst (zero-based,
+%               ij coordinates)
+%   ylocs   -   array containing all y location of each burst (zero-based,
+%               ij coordinates)
 %   
 %   Return: 
-%   x   - x location of origin neuron
-%   y   - y location of origin neuron
-%   n   - neuron number of origin neuron
+%   x   - x location of origin neuron (zero-based, ij coordinates)
+%   y   - y location of origin neuron (zero-based, ij coordinates)
+%   n   - neuron number of origin neuron (zero-based, Graphitti row major
+%         order)
 %   bin - bin used
 %
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
@@ -35,14 +39,19 @@ numMinimalSpikingNeurons = length(find(frame(:,bin) > 1));
 while numMinimalSpikingNeurons < 3
     bin = bin + 1;
     % finds largest element in theBin
+    if bin > size(frame, 2)
+        errorStruct.message = 'No bin with three neurons producing multiple spikes';
+        errorStruct.identifier = 'getBurstOrigin()';
+        error(errorStruct);
+    end
     numMinimalSpikingNeurons = length(find(frame(:,bin) > 1));
 end
 
-% Now get the most active spike counts, the neurons that produced that many
-% spikes, and how many neurons produced that many
+% Now get the most active spike counts, the indices for the neurons that
+% produced that many spikes, and how many neurons produced that many
 maxSpikes = max(frame(:,bin));
-maxSpikingNeurons = find(frame(:,bin)==maxSpikes);
-numMaxNeurons = length(maxSpikingNeurons);
+maxSpikingNeuronInds = find(frame(:,bin)==maxSpikes);
+numMaxNeurons = length(maxSpikingNeuronInds);
 originalNumMaxNeurons = numMaxNeurons;
 
 % There could be multiple clusters. Let's find the largest one using a
@@ -58,26 +67,26 @@ originalNumMaxNeurons = numMaxNeurons;
 % up as the origin.)
 i = 1;
 while i <= numMaxNeurons
-    diffNs = mod(abs(maxSpikingNeurons(i) - maxSpikingNeurons), grid);
+    diffNs = mod(abs(maxSpikingNeuronInds(i) - maxSpikingNeuronInds), grid);
     numClose = length(find(diffNs <= 10));
     % if there aren't enough close neurons, remove this one from the list
-    if numClose < length(maxSpikingNeurons) - numClose
-        maxSpikingNeurons(i) = [];
+    if numClose < length(maxSpikingNeuronInds) - numClose
+        maxSpikingNeuronInds(i) = [];
         numMaxNeurons = numMaxNeurons - 1;
     else
         i = i + 1;
     end
 end
 
-assert(~isempty(maxSpikingNeurons));
+assert(~isempty(maxSpikingNeuronInds));
 
 if originalNumMaxNeurons > 1 && numMaxNeurons == 1
     fprintf('Warning: number of neurons reduced to one.\n')
 end
 
-% get centroid of neurons with max value
-x = ceil(mean(xlocs(maxSpikingNeurons)));          
-y = ceil(mean(ylocs(maxSpikingNeurons)));
+% get centroid of neurons with max value (zero-based, ij coordinates)
+x = ceil(mean(xlocs(maxSpikingNeuronInds)));          
+y = ceil(mean(ylocs(maxSpikingNeuronInds)));
 % Compute neuron ID corresponding to (x, y) (zero based)
 n = y*grid + x;
 

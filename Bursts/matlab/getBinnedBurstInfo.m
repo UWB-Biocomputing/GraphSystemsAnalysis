@@ -22,22 +22,21 @@
 %   Syntax: getBinnedBurstInfo(h5dir)
 %   
 %   Input:  
-%   datasetName BrainGrid dataset (e.g. tR_1.0--fE_0.90_10000)
-%               the entire path can be used; for example
-%               '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
+%   datasetName - BrainGrid dataset (e.g. tR_1.0--fE_0.90_10000)
+%                 the entire path can be used; for example
+%                 '/CSSDIV/research/biocomputing/data/tR_1.9--fE_0.98'
 %
 %   Output:  
-%   <allbinnedBurstInfo.csv> - burst metadata
-%   the columns of the csv are named in the order of this list
-%   ID, startBin#, endBin#, width(bins), totalSpikeCount, peakBin, peakHeight(spikes), Interval(bins)
+%   <allbinnedBurstInfo.csv> - burst metadata. The columns of the csv are:
+%                              burst ID, startBin#, endBin#, width(bins),
+%                              totalSpikeCount, peakBin,
+%                              peakHeight(spikes), Interval(bins)
 %
 % Author:   Jewel Y. Lee (jewel.yh.lee@gmail.com)
 % Last updated: 02/10/2022 added Documentation, cleaned redundant code
 % Last updated by: Vu T. Tieu (vttieu1995@gmail.com)
 
-function getBinnedBurstInfo(datasetName)
-% line below is used for testing
-% h5dir = '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'        
+function getBinnedBurstInfo(datasetName)      
 
 % The h5info call below for neuronTypes will get file information like:
 %   Filename    - contains the filepath; it would be the same as h5dir

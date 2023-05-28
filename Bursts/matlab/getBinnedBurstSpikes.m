@@ -4,7 +4,7 @@
 %   Read BrainGrid result dataset "spikesProbedNeurons" to retrieve location 
 %   of each spike that happended within a burst, and save as flatten image arrays.
 %
-%   Example of flatten image arrays in a 5x5 matrix:
+%   Example of flattened image arrays in a 5x5 matrix:
 %       1 1 2 0 1                       
 %       1 2 2 1 1
 %       1 3 2 1 0
@@ -31,19 +31,20 @@
 % Updated: May 2023 minor tweaks
 % Updated by: Michael Stiber
 
-function getBinnedBurstSpikes(datasetName)
+function getBinnedBurstSpikes(h5dir)
 
-head = 10;                      % number of bins before burst start bin,     start video before beginning of burst
-tail = 0;                       % number of bins after burst end bin,        end video at last bin of burst
+head = 10;                      % number of bins before burst start bin to include
+tail = 0;                       % number of bins after burst end bin to include
 
 fprintf('Starting read of spikes from HDF5 file...');
-spikesProbedNeurons = (h5read([datasetName '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
+spikesProbedNeurons = (h5read([h5dir '.h5'], '/spikesProbedNeurons'))';     % firing times & neuron IDs
 fprintf(' done\n');
-binnedBurstInfoFilePath = [datasetName '/allBinnedBurstInfo.csv'];
+binnedBurstInfoFilePath = [h5dir '/allBinnedBurstInfo.csv'];
 
-% skipping the first column containing the burst ID, and the first row containing the names of the columns
-burstInfo = csvread(binnedBurstInfoFilePath,1,1);    % read file with row offset by 1 and column offset by 1
-nBursts = size(burstInfo,1);                         % number of bursts identified
+% skipping the first column containing the burst ID, and the first row
+% containing the names of the columns
+burstInfo = readmatrix(binnedBurstInfoFilePath, 'Range', [2 2]);
+nBursts = size(burstInfo,1);
 
 % ended gets the number of row; nNeurons gets the number of columns/neurons
 % (NOTE:    spikesProbedNeuron when read has columns as the number of neurons and rows 
@@ -53,21 +54,19 @@ nBursts = size(burstInfo,1);                         % number of bursts identifi
 % ------------------------------------------------------------------------
 % Get spike info from spikesProbedNeurons for each burst
 % ------------------------------------------------------------------------
-% Every column in "frame" is a flatten image vector represents 100x100 
-% image (Matlab is column-major). An element within a "frame" represents the spikerate
-% at that x and y location. A "frame" could be understood as a collection of spikerates.
-% To see what triggers a burst, save 10 extra bins before burst starts.
-% The spikerate is produced using the method called spike train binning where the spike count
-% at each x and y location is concatenated(summed) and compressed from 100 time steps.
-% Frames are assembled into a cell array and then saved in one single .mat file for better performance.
-% (NOTE:   default bin size = 10ms, time step size = 0.1 ms)
+% We build an "allFrames" cell array, in which each element corresponds to
+% a burst. For each burst, we build a "frame" array, in which each row is a
+% neuron and each column is a time bin (timeStepsPerBin is the computation
+% of the number of simulation time steps in a bin, duh). For each frame,
+% the value at (neuron, bin) is the number of spikes produced by that
+% neuron in that bin.
 % ------------------------------------------------------------------------
 binSize = 10;                           % 10ms per bin
 timeStepSize = 0.1;                     % 0.1ms per time step
 timeStepsPerBin = binSize/timeStepSize; % 10/0.1 = 100 in the above case
 allFrames = cell(1,nBursts);            % This stores all the frames produced by the loop below
 
-% Get the analysis start time
+% Get the analysis start time, to track how long this is taking
 fprintf('Starting analysis...\n')
 allStartTime = tic;
 for iBurst = 1:nBursts
@@ -120,4 +119,4 @@ for iBurst = 1:nBursts
         remainingEstimatedTime);
 end
 
-save([datasetName '/allFrames.mat'],'allFrames','-v7.3');
+save([h5dir '/allFrames.mat'],'allFrames','-v7.3');

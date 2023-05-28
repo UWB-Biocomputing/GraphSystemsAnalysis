@@ -10,14 +10,19 @@
 %               '/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90'
 %
 %   Input for helper fuction getBurstOriginXYN
-%   frame   -   matrix of spike rates of a burst
-%   xloc    -   array containing all x location of each burst
-%   yloc    -   array containing all y location of each burst
+%   frame   -   matrix of neuron spike counts in a burst. A frame has one row
+%               per neuron and one column per time bin.
+%   xloc    -   array containing all x location of each burst (zero-based,
+%               ij coordinates)
+%   yloc    -   array containing all y location of each burst (zero-based,
+%               ij coordinates)
 %
 %   Output: 
-%   <allBurstOrigin.csv>  - burst origin (x,y) and neuron ID for every burst
-%                           (This is Graphitti neuron ID, i.e.,
-%                           zero-based.)
+%   <allBurstOrigin.csv>  - burst origin (x, y), neuron ID, and origin bin #
+%                           for every burst.
+%                           (This is Graphitti neuron ID, i.e., zero-based,
+%                           and (x, y) are also zero-based, ij
+%                           coordinates))
 %   
 % Author:   Jewel Y. Lee (jewel87@uw.edu)
 % Updated: 02/22/2022 added improvement on performance for file reads
@@ -54,11 +59,21 @@ ylocs = h5read([h5dir '.h5'], '/yloc');
 % Calculate burst origin based on spikerates at each x and y location     
 for iBurst = 1:nBursts
     frame = allFrames{iBurst};  % Spike counts for each neuron and each bin in burst
+    % A frame has one row per neuron and one column per time bin.
 
-    % Gets centroid of neurons with the highest spike count
-    % What returns are the X and Y location and Neuron ID (zero-based)
-    [x, y, n, bin] = getBurstOriginXYN(frame, xlocs, ylocs);
-    fprintf(originFile, '%d, %d, %d, %d\n', x, y, n, bin);
+    if size(frame,2) ~= burstInfo(iBurst,3) + 10
+        error(['Frame for burst ' num2str(iBurst) ' doesn''t have expected # of bins (got '...
+            num2str(size(frame,2)) ' instead of ' num2str(burstInfo(iBurst,3)) ')']);
+    end
+
+    try
+        % Gets centroid of neurons with the highest spike count
+        % What returns are the X and Y location and Neuron ID (zero-based)
+        [x, y, n, bin] = getBurstOriginXYN(frame, xlocs, ylocs);
+        fprintf(originFile, '%d, %d, %d, %d\n', x, y, n, bin);
+    catch ME
+        warning(['Failed finding origin for burst ' num2str(iBurst)]);
+    end
 end
 fclose(originFile);
 end
