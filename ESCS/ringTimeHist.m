@@ -1,8 +1,8 @@
-function ringTimeHistogram(data, bins, outFile)
+function ringTimeHist(data, bins, outFile)
 % ringTimeHistogram.m Creates a histogram from a vector of ring (wait)
 % times.
 %
-% Syntax: ringTimeHistogram(data, 10, outFile)
+% Syntax: ringTimeHist(data, 10, outFile)
 %
 % Inputs:
 %   data : Vector of ring (wait) times
