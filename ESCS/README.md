@@ -6,12 +6,27 @@ format used in Graphitti's v0.9.2 release. The `test-data` directory contains
 an example of such files.
 
 An efficient "string to double conversion" MEX function is used because
-Matlab's built-in `str2double` function is very slow. The C++ code for
+MATLAB's built-in `str2double` function is very slow. The C++ code for
 compiling the MEX function, under
 the `str2doubleq` directory, was published by 
 [Felipe G. Nievinski](https://www.mathworks.com/matlabcentral/fileexchange/61652-faster-alternative-to-builtin-str2double).
 
-Here, the important functions for analysis of ESCS simulation output are:
+Instruction on how to build C++ MEX Programs can be found
+[here](https://www.mathworks.com/help/matlab/matlab_external/build-c-mex-programs.html)
+but in summary, you use the `mex` command. First, you must set up the
+compiler for C++ MEX applications.
+```
+    mex -setup C++
+```
+
+Then, build the C++ MEX program using the MATLAB `mex` command.
+```
+    mex MyMEXCode.cpp
+```
+
+In Linux, this will generate a binary file with the extension `mexa64`.
+
+In this directory, the important functions for analysis of ESCS simulation output are:
 
 * __`readXmlFile`:__ reads all the XML file data into a Matlab
 struct that can then be processed and used to generate figures.
