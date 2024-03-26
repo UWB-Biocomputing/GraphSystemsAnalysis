@@ -17,6 +17,7 @@ the other components of our research infrastructure.
   network event timing characteristics or from avalanches.
 * __DataReorganization.__ Code to read and write different file formats, extract subsets
   of data, etc.
+* __ESCS.__ Code to analyze the results of ESCS simulations.
 * __ML.__ Machine learning code.
 * __Ratime.__ Code to analyze aggregate graph event behaviors, i.e., event counts
   within equal time bins (and therefore event rate versus time).
