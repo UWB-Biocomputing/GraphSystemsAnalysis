@@ -4,8 +4,8 @@
 # Creation Date: 4/13/2025
 # Date of Last Modification: 4/30/2025
 ##############################################################################
-# Purpose:	To create test cases with a known number of spikes and avalanches
-#           to verify algorithmic accuracy and performance.
+# Purpose:	To create test cases with at least two avalanches which
+#           eventually merge together.
 
 import csv
 import math
@@ -80,87 +80,79 @@ def generateAvalanche(currentTime, numSpikes):
     # serves as the temporal queue for spikes, contains tuples(timestamp, [neuron array])
     temporalQueue = []
 
+    # generate future timestamp far enough forward to include all spikes
+    # for an avalanche of the given length
+    minTime = numSpikes*49
+    randomTime = random.randint(0, 1000)
+    maxTime = minTime + randomTime
+    startTime = currentTime + random.randint(minTime, maxTime)
+
     # generate the first spike in the data set
     currentSet = []
+    # acts as the root node, connecting two avalanches
+    # due to randomness, avalanches may connect in more than one location
     currentSpike = makeSpike()
-    spikesRemaining = spikesRemaining - 1
     currentSet.append(currentSpike)
-    tempTup = currentTime, currentSet
+    tempTup = startTime, currentSet
     temporalQueue.append(tempTup)
     currentSet = []
 
-    # temporal threshold is 50
-    currentTime = currentTime + random.randint(0, 49)
+    # set the starting points
+    spikeA = currentSpike
+    spikeB = currentSpike
+    backwardsTime = startTime
 
     while spikesRemaining > 0:
-        nextSpike = makeSpikeSpecific(currentSpike)
-
+        # Generate spikes for both avalanches
+        tempA = makeSpikeSpecific(spikeA)
         # If spikes are not spatially close, generate a new spike
-        while not spatialCheck(currentSpike, nextSpike):
-            nextSpike = makeSpikeSpecific(currentSpike)
+        while not spatialCheck(spikeA, tempA):
+            tempA = makeSpikeSpecific(spikeA)
 
-        currentSet.append(nextSpike)
+        tempB = makeSpikeSpecific(spikeA)
+        # If spikes are not spatially close, generate a new spike
+        while not spatialCheck(spikeB, tempB):
+            tempB = makeSpikeSpecific(spikeB)
+
+        backwardsTime = backwardsTime - random.randint(0, 49)
+
+        currentSet.append(tempA)
+        currentSet.append(tempB)
+        tempTup = backwardsTime, currentSet
+        temporalQueue.append(tempTup)
+        currentSet = []
+
+        spikeA = tempA
+        spikeB = tempB
         spikesRemaining = spikesRemaining - 1
-        chance = random.randint(0, 100)
-        # Chance defines the frequency at which multiple spikes will appear in the same time period
-        if chance < 70 or spikesRemaining == 0:
-            tempTup = currentTime, currentSet
-            temporalQueue.append(tempTup)
-            currentTime = currentTime + random.randint(0, 49)
-            currentSet = []
 
-        currentSpike = nextSpike
+    temporalQueue.reverse()
 
-    # Debugging
-    #for item in temporalQueue:
-    #    print(f'{item}')
-
-    return temporalQueue
+    return temporalQueue, startTime
 
 # ---------------------------------------------------------------------------
 # data generator
-# Arguments: spike count, avalanche count, single nonavalanche spike count
-# NOTE: the number of single, nonavalanche, spikes is an upper limit.
-#       the algorithm will randomly select how many of these spikes
-#       to intermix between the avalanches
-def makeStuff(numSpikes, numAvalanches, singleSpikes):
+# Arguments: length of avalanche in spikes, avalanche count
+# will generate avalanches with a spike count of 2*length + 1
+def makeStuff(avalancheLength, numAvalanches):
     # Define and check for the minimum number of spikes per avalanche
-    # 2 spikes per avalanche
+    # 2 spikes per avalanche - this is also the minimum length
     spikesPerAvalancheControl = 2
-    if (numSpikes / numAvalanches) < spikesPerAvalancheControl:
+    if (avalancheLength / numAvalanches) < spikesPerAvalancheControl:
         raise Exception("Invalid number of spikes for the given number of avalanches.")
 
     # DECLARE VARIABLES
-    spikesRemainingAva = numSpikes          # number of spikes left to generate
     avalanchesRemaining = numAvalanches     # number of avalanches left to generate
-    spikesRemainingSingle = singleSpikes    # number of single spikes left to generate
-
     currentTime = random.randint(0, 600)
 
     # serves as the temporal queue for spikes, contains tuples(timestamp, [neuron array])
     temporalQueue = []
 
     while avalanchesRemaining > 0:
-        if (spikesRemainingAva / avalanchesRemaining) >= spikesPerAvalancheControl:
-            availableSpikes = 2 + spikesRemainingAva - (spikesPerAvalancheControl * avalanchesRemaining)
-            spikesToUse = random.randint(2, availableSpikes)
-            tempQueue = generateAvalanche(currentTime, spikesToUse)
-            spikesRemainingAva = spikesRemainingAva - spikesToUse
-            avalanchesRemaining = avalanchesRemaining - 1
-            temporalQueue = temporalQueue + tempQueue
-
-        currentTime = currentTime + random.randint(51, 1400)
-
-        if spikesRemainingSingle > 0:
-            spikesToUse = random.randint(1, spikesRemainingSingle)
-            for i in range(0, spikesToUse):
-                tempSpike = makeSpike()
-                tempSet = []
-                tempSet.append(tempSpike)
-                tempTup = currentTime, tempSet
-                temporalQueue.append(tempTup)
-                currentTime = currentTime + random.randint(51, 1400)
-            spikesRemainingSingle = spikesRemainingSingle - spikesToUse
+        tempQueue, currentTime = generateAvalanche(currentTime, avalancheLength)
+        avalanchesRemaining = avalanchesRemaining - 1
+        temporalQueue = temporalQueue + tempQueue
+        currentTime = currentTime + random.randint(70, 2800)
 
     # Debugging
     #for item in temporalQueue:
@@ -174,15 +166,13 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1].__eq__("help") or sys.argv[1].__eq__("Help"):
             print('-----Help-----')
-            print('First Argument: number of spikes available for avalanches')
+            print('First Argument: length in spikes for a given avalanche')
             print('Second Argument: number of avalanches')
-            print('Third Argument: number of single nonavalanche spikes')
-            print('Ex: python basicAvalanches.py 20 2 25')
+            print('Ex: python mergingAvalanches.py 20 2')
         else:
-            avaSpikes = int(sys.argv[1])
+            avalancheLength = int(sys.argv[1])
             avalanches = int(sys.argv[2])
-            singleSpikes = int(sys.argv[3])
-            output = makeStuff(avaSpikes, avalanches, singleSpikes)
+            output = makeStuff(avalancheLength, avalanches)
             grid = makeGrid()
             results = []
             tempArray = []
@@ -196,10 +186,10 @@ if __name__ == '__main__':
         # Generate data directory if does not exist
         pathlib.Path("./data").mkdir(parents=True, exist_ok=True)
         i = 0
-        path = './data/basicAvalanches' + str(i) + '.csv'
+        path = './data/mergingAvalanches' + str(i) + '.csv'
         while (os.path.isfile(path)):
             i = i + 1
-            path = './data/basicAvalanches' + str(i) + '.csv'
+            path = './data/mergingAvalanches' + str(i) + '.csv'
 
         with open(path, 'w', newline='') as csvfile:
             write = csv.writer(csvfile)
@@ -209,4 +199,4 @@ if __name__ == '__main__':
 
     else:
         print('Must provide input arguments.')
-        print('Ex: python basicAvalanches.py 20 2 25')
+        print('Ex: python mergingAvalanches.py 20 2')
