@@ -82,19 +82,30 @@ int main() {
 
     ifstream iFile("/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90/allSpikeTime.csv");
     string line = "";
-    
-    // read csv file line-by-line
-    while (getline(iFile, line)) {
-        stringstream ss(line);
-        string token = "";
+	string del = ",";
 
-        // within each csv line, read each comma-separated-value
-        getline(ss, token, ',');                                // fetch fist column: timestep        
-        int currentTimestep = stoi(token);
+	// read csv file line-by-line
+	while (getline(iFile, line)) {
 
-        // second column onwards (neuronIDs)
-        while (getline(ss, token, ',')) { 
-            int currentNeuronID = stoi(token);
+		// search line for first value - timestep
+		auto pos = line.find(del);
+		string token = "";
+		token = line.substr(0, pos);
+		line.erase(0, pos + del.length());
+		pos = line.find(del);
+		int currentTimestep = stoi(token);
+		bool endOfLine = false;
+
+		// increment through line for each subsequent value
+		while (endOfLine == false) {
+			// catch final line
+			if (pos == string::npos) {
+				endOfLine = true;
+			}
+			token = line.substr(0, pos);
+			line.erase(0, pos + del.length());
+			pos = line.find(del);
+			int currentNeuronID = stoi(token);
             Spike currentSpike = {currentTimestep, currentNeuronID};
             numSpikes++;
             bar.progress(numSpikes, 570189562);                 // progress bar - hardcoded number
