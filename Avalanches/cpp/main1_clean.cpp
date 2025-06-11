@@ -1,4 +1,4 @@
-// Compilation Instruction: g++ -O3 -march=native -flto -funroll-loops main1.cpp 
+// Compilation Instruction: g++ -O3 -march=native -flto -funroll-loops main1_clean.cpp 
 // -march=native on systems with AVX-512 can occasionally cause thermal throttling due to wide vector execution apparently
 
 #include <bits/stdc++.h>
@@ -6,8 +6,10 @@
 
 using namespace std;
 
+
 int tau = 50;                   // 5ms meanISI translates to 50 timesteps
 int radius = 8;
+
 
 /**
  * Define custom datatype for a Spike object containing a timestep and neuronID.
@@ -52,11 +54,11 @@ namespace std {
  * @return floating point distance between the two neurons.
  */
 double getDistance(int id1, int id2) {
-    int y1 = (id1-1)/100 + 1;
-    int x1 = id1 - (100*y1) + 100;
+    int x1 = (id1-1)/100 + 1;
+    int y1 = id1 - (100*x1) + 100;
 
-    int y2 = (id2-1)/100 + 1;
-    int x2 = id2 - (100*y2) + 100;
+    int x2 = (id2-1)/100 + 1;
+    int y2 = id2 - (100*x2) + 100;
 
     return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
@@ -75,12 +77,15 @@ int main() {
     unordered_map<Spike, int> spikeToAval;                      // each spike remembers which avalanche
                                                                 // it belongs to
 
-    unordered_map<int, set<Spike>> avalanches;                  // each avalanche is identified by  
+    unordered_map<int, set<Spike>> avalanches;        // each avalanche is identified by  
                                                                 // an integer key
 
     int avalancheID = 0;                                        // initial avalanche
 
-    ifstream iFile("/CSSDIV/research/biocomputing/data/tR_1.0--fE_0.90/allSpikeTime.csv");
+    string directory = "/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/";
+    string filename = "lastQuarter";
+
+    ifstream iFile(directory + filename + ".csv");
     string line = "";
     
     // read csv file line-by-line
@@ -89,7 +94,7 @@ int main() {
         string token = "";
 
         // within each csv line, read each comma-separated-value
-        getline(ss, token, ',');                                // fetch fist column: timestep        
+        getline(ss, token, ',');                                // fetch first column: timestep        
         int currentTimestep = stoi(token);
 
         // second column onwards (neuronIDs)
@@ -97,7 +102,7 @@ int main() {
             int currentNeuronID = stoi(token);
             Spike currentSpike = {currentTimestep, currentNeuronID};
             numSpikes++;
-            bar.progress(numSpikes, 570189562);                 // progress bar - hardcoded number
+            bar.progress(numSpikes, 172323192);                 // progress bar - hardcoded number
 
             // Maintain the recentSpikes sliding window (< tau)
             while (!recentSpikes.empty() && recentSpikes.front().ts < (currentTimestep - tau)) {
@@ -142,7 +147,7 @@ int main() {
             } else {
                 // Merge avalanches into the first avalID
                 auto it = overlappingAvalIds.begin();
-                int mainID = *it++; //assign first and then increment
+                int mainID = *it++;                             // assign first and then increment
 
                 for (; it != overlappingAvalIds.end(); ++it) {
                     for (const Spike& s : avalanches[*it]) {
@@ -162,7 +167,6 @@ int main() {
             }
 
             recentSpikes.push_back(currentSpike);
-            // token = strtok(nullptr, ",");
         }
     }
 
@@ -171,7 +175,8 @@ int main() {
     std::cout << "\nExecution time for " << numSpikes << " spikes: " << duration.count() << " seconds\n";
     cout << "Number of avalanches: " << avalanches.size() << endl;
 
-    std::ofstream outputFile("./output/avalancheOutput_FULL.csv");
+    // Documentation and output
+    std::ofstream outputFile("./output/SpaTemporal_" + filename + "_tau-" + to_string(tau) + ".csv");
     if(outputFile.is_open()) {
         //header row
         outputFile << "ID,StartRow,EndRow,StartT,EndT,Width,TotalSpikes\n";
@@ -188,7 +193,29 @@ int main() {
     } else {
         cerr << "Unable to open file for writing." << endl;
     }
-    
 
-    }
+    // outputFile.clear();
+
+    // outputFile.open("./output/SpaTemporal_" + filename + "_tau-" + to_string(tau)+ ".txt");
+    // if(outputFile.is_open()) {
+    //     //header row
+    //     // outputFile << "ID,StartRow,EndRow,StartT,EndT,Width,TotalSpikes\n";
+
+    //     //write avalanche data
+    //     int i = 1;
+    //     for(auto [id, aval] : avalanches) {
+    //         outputFile << "Avalanche - " << i << " ; Size = " << aval.size() << endl;
+    //         for(auto spk : aval) {
+    //             outputFile<<spk.ts<<", "<<spk.id<<endl;
+    //         }
+    //         i++;
+    //     }
+    
+    //     outputFile.close();
+    //     cout << "Output data written to txt file successfully" << endl;
+    // } else {
+    //     cerr << "Unable to open file for writing." << endl;
+    // }
+    
+}
 
