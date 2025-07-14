@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
+"""
+@file     plotMidSizedAvalancheProximity.py
+@author   Arjun Taneja (arjun79@uw.edu)
+@date     13 July, 2025
 
+@brief    Histogram mid-sized avalanche proximity to burst start/end.
+
+Usage:
+    python3 plotMidSizedAvalancheProximity.py
+"""
 import sys
 sys.path.append("/home/NETID/arjun79/.local/bin")
 
@@ -7,11 +16,13 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Input file path
 infile = "/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/output/SpaTemporal_lastQuarter_tau-1.csv"
 
 bursts = []
 mids = []
 
+# Read avalanche data from csv file
 with open(infile, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
@@ -75,8 +86,9 @@ after = np.array(after_burst_distances)
 overlaps = np.sum(before == 0) + np.sum(after == 0)
 print(f'Number of overlapping avalanches (distance=0): {overlaps}')
 
-##### Plot #####
-
+# -----------------------------------------------------------------------------
+# HISTOGRAM PLOT
+# -----------------------------------------------------------------------------
 # Get distance range
 min_dist = 0
 max_dist = max(np.max(before), np.max(after))
@@ -119,9 +131,9 @@ plt.grid(True, which='both', ls='--', lw=0.5)
 plt.tight_layout()
 
 # Add text annotation for overlapping avalanches
-plt.text(0.02, 0.98, f'Avalanches that overlap \nwith bursts: {overlaps}', 
-            transform=plt.gca().transAxes, verticalalignment='top',
-            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+# plt.text(0.02, 0.98, f'Avalanches that overlap \nwith bursts: {overlaps}', 
+#             transform=plt.gca().transAxes, verticalalignment='top',
+#             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
 plt.savefig(f"/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/output/PlotsNFigures/BurstProximity/midSizeProximity.pdf", bbox_inches="tight")
 # plt.show()

@@ -1,23 +1,44 @@
-// Compilation Instruction: g++ -O3 -march=native -flto -funroll-loops main1_clean.cpp 
-// -march=native on systems with AVX-512 can occasionally cause thermal throttling due to wide vector execution apparently
+/**
+ * @file    spatiotemporal.cpp
+ * @author  Arjun Taneja (arjun79@uw.edu)
+ * @date    13 July, 2025
+ * @brief   Perform spatiotemporal clustering on spikes to construct avalanches.
+ *
+ * Algorithm Overview:
+ *   For each incoming spike (parsed chronologically in time):
+ *     1. Sliding Window Maintenance:
+ *          Maintain a deque (recentSpikes) of spikes within a temporal window (tau).
+ *     2. Neighbor Scan:
+ *          Find spatiotemporal neighbors by checking distance to spikes in the deque.
+ *     3. Avalanche Insertion and Merging:
+ *          Insert current spike and neighbors into avalanches.
+ *          If neighbors span multiple avalanches, merge them into one.
+ *
+ * Compilation Instruction:
+ *   g++ -O3 -march=native -flto -funroll-loops spatiotemporal.cpp
+ */
 
 #include <bits/stdc++.h>
-#include "tqdm.h"               // CLI progress bar - does not affect core logic
+#include "tqdm.h"  // CLI progress bar (optional, does not affect core logic)
 
 using namespace std;
 
 
-int tau = 50;                   // 5ms meanISI translates to 50 timesteps
-int radius = 8;
+// ----------------------------------------------------------------------------
+// GLOBAL PARAMETERS
+// ----------------------------------------------------------------------------
 
+int tau = 50;       // 5ms meanISI translates to 50 timesteps
+int radius = 8;     // Spatial distance threshold for spatiotemporal neighbors
 
 /**
- * Define custom datatype for a Spike object containing a timestep and neuronID.
- * Define comparison logic to facilitate sorting and usage in ordered data types.
+ * @brief Represents a spike event with timestep and neuron ID.
+ *
+ * Defines comparison operators for sorting and hashing.
  */
 struct Spike {
-    int ts;
-    int id;
+    int ts;         // Timestep
+    int id;         // Neuron ID
 
     bool operator==(const Spike &s) const {
         return (ts == s.ts) && (id == s.id);
@@ -34,7 +55,7 @@ struct Spike {
 };
 
 /**
- * Define custom hash function to facilitate Spike usage as keys in hashmaps.
+ * @brief Define custom hash function to facilitate Spike usage as keys in hashmaps.
  */
 namespace std {
     template <>
@@ -47,11 +68,10 @@ namespace std {
     };
 }
 
-/**
- * Convert neuronID to x,y coordinates and get distance between two neurons.
- *
+ /**
+ * @brief Compute Euclidean distance between two neurons given their IDs.
  * @param id1, id2 Represents the 1-dimensional integer index of the neurons.
- * @return floating point distance between the two neurons.
+ * @return Distance between neurons in 2D grid.
  */
 double getDistance(int id1, int id2) {
     int x1 = (id1-1)/100 + 1;
@@ -63,24 +83,27 @@ double getDistance(int id1, int id2) {
     return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
-
+/**
+ * @brief Main function: read spike data, perform spatiotemporal clustering,
+ *        merge avalanches as needed, and output results.
+ *
+ * Input:
+ *   - CSV file at specified path.
+ * Output:
+ *   - CSV file with avalanche information written to specified path.
+ */
 int main() {
-    auto start = std::chrono::high_resolution_clock::now();     // benchmark time
-    tqdm bar;                                                   // progress bar
+    auto start = std::chrono::high_resolution_clock::now();     
+    tqdm bar;  // CLI progress bar
 
-    int numSpikes = 0;                                          // total number of spikes encountered
+    int numSpikes = 0;  // Total number of spikes processed
 
-    deque<Spike> recentSpikes;                                  // double-ended queue maintains dynamic list 
-                                                                // of temporally close spikes up to
-                                                                // tau steps back (sliding window)
+    deque<Spike> recentSpikes;  // Sliding window of recent spikes (up to tau timesteps)
+    unordered_map<Spike, int> spikeToAval;  // Map spike to its avalanche ID
 
-    unordered_map<Spike, int> spikeToAval;                      // each spike remembers which avalanche
-                                                                // it belongs to
+    unordered_map<int, set<Spike>> avalanches;  // Map avalancheID -> spikes 
 
-    unordered_map<int, set<Spike>> avalanches;        // each avalanche is identified by  
-                                                                // an integer key
-
-    int avalancheID = 0;                                        // initial avalanche
+    int avalancheID = 0;  // Initial avalanche
 
     string directory = "/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/";
     string filename = "lastQuarter";
@@ -88,30 +111,31 @@ int main() {
     ifstream iFile(directory + filename + ".csv");
     string line = "";
     
-    // read csv file line-by-line
+    // ------------------------------------------------------------------------
+    // Read input file line-by-line
+    // ------------------------------------------------------------------------
     while (getline(iFile, line)) {
         stringstream ss(line);
         string token = "";
 
-        // within each csv line, read each comma-separated-value
-        getline(ss, token, ',');                                // fetch first column: timestep        
+        // First column: timestep
+        getline(ss, token, ',');                        
         int currentTimestep = stoi(token);
 
-        // second column onwards (neuronIDs)
+        // Neuron IDs for this timestep
         while (getline(ss, token, ',')) { 
             int currentNeuronID = stoi(token);
             Spike currentSpike = {currentTimestep, currentNeuronID};
             numSpikes++;
-            bar.progress(numSpikes, 172323192);                 // progress bar - hardcoded number
+            bar.progress(numSpikes, 172323192);  // Hardcoded total spike count
 
-            // Maintain the recentSpikes sliding window (< tau)
+            // Maintain sliding window of recent spikes (< tau)
             while (!recentSpikes.empty() && recentSpikes.front().ts < (currentTimestep - tau)) {
                 recentSpikes.pop_front();
             }
             
 
-            // Find neighbor spikes from list of recent spikes
-            // A neighbor spike must be close to currentSpike in both space and time
+            // Find spatiotemporal neighbors
             vector<Spike> neighborSpikes;
             for (const Spike& s : recentSpikes) {
                 if (getDistance(s.id, currentNeuronID) < radius) {
@@ -119,15 +143,14 @@ int main() {
                 }
             }
 
-            // if no neighborSpikes found, skip the current spike
-            // this avoids forming 1-sized avalanches
+            // Skip spike if it has no neighbors (avoids 1-sized avalanches)
             if(neighborSpikes.empty()) {
                 recentSpikes.push_back(currentSpike);
                 continue;
             }
                 
 
-            // Check all neighbor spikes and document the avalanches they belong to
+            // Identify overlapping avalanche IDs from neighbors
             unordered_set<int> overlappingAvalIds;
             for (const Spike& s : neighborSpikes) {
                 if (spikeToAval.count(s)) {
@@ -147,7 +170,7 @@ int main() {
             } else {
                 // Merge avalanches into the first avalID
                 auto it = overlappingAvalIds.begin();
-                int mainID = *it++;                             // assign first and then increment
+                int mainID = *it++;  // Assign first and then increment
 
                 for (; it != overlappingAvalIds.end(); ++it) {
                     for (const Spike& s : avalanches[*it]) {
@@ -175,7 +198,7 @@ int main() {
     std::cout << "\nExecution time for " << numSpikes << " spikes: " << duration.count() << " seconds\n";
     cout << "Number of avalanches: " << avalanches.size() << endl;
 
-    // Documentation and output
+    // Output results to CSV
     std::ofstream outputFile("./output/SpaTemporal_" + filename + "_tau-" + to_string(tau) + ".csv");
     if(outputFile.is_open()) {
         //header row
@@ -193,6 +216,11 @@ int main() {
     } else {
         cerr << "Unable to open file for writing." << endl;
     }
+
+    // ------------------------------------------------------------------------
+    // Optional: Output results to TXT for debugging
+    // Uncomment to write detailed spike-ownership data.
+    // ------------------------------------------------------------------------
 
     // outputFile.clear();
 

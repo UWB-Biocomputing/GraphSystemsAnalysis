@@ -1,17 +1,34 @@
-// Compilation Instruction: g++ -O3 -march=native -flto -funroll-loops temporalOnly.cpp 
-// -march=native on systems with AVX-512 can occasionally cause thermal throttling due to wide vector execution apparently
+/**
+ * @file    temporalOnly.cpp
+ * @author  Arjun Taneja (arjun79@uw.edu)
+ * @date    13 July, 2025
+ * @brief   Perform temporal-only clustering on spikes to construct avalanches.
+ *
+ *          Reads a CSV with spikes (timestep, neuron IDs),
+ *          groups them into avalanches based on a temporal threshold (tau),
+ *          removes single-spike avalanches,
+ *          and outputs avalanche information to CSV.
+ *
+ * Compilation Instruction:
+ *   g++ -O3 -march=native -flto -funroll-loops temporalOnly.cpp
+ */
 
 #include <bits/stdc++.h>
-#include "tqdm.h"                   // CLI progress bar - does not affect core logic
+#include "tqdm.h"  // CLI progress bar (for large datasets)
 
 using namespace std;
 
-int tau = 1.5;                      // meanISI is 1.5 - gets truncated to 1 with integer assignment 
-                                    // truncation does not affect core logic
+// ----------------------------------------------------------------------------
+// GLOBAL PARAMETERS
+// ----------------------------------------------------------------------------
 
-/**
- * Define custom datatype for a Spike object containing a timestep and neuronID.
- * Define comparison logic to facilitate sorting and usage in ordered data types.
+int tau = 1.5;  // meanISI is 1.5 - gets truncated to 1 with integer assignment 
+                // truncation does not affect core logic
+
+ /**
+ * @brief Represents a single spike event with timestep and neuron ID.
+ *
+ * Defines comparison operators for use in sets/maps.
  */
 struct Spike {
     int ts;
@@ -31,19 +48,26 @@ struct Spike {
     }
 };
 
-
+/**
+ * @brief Reads spike data from CSV, clusters into avalanches,
+ *        removes single-spike avalanches, and writes output.
+ *
+ * Input:
+ *   - CSV file at specified path.
+ * Output:
+ *   - CSV file with avalanche statistics written to specified path.
+ */
 int main() {
-    auto start = std::chrono::high_resolution_clock::now();     // benchmark time
-    tqdm bar;                                                   // progress bar
+    auto start = std::chrono::high_resolution_clock::now();
+    tqdm bar;  // Progress bar
+    
+    int numSpikes = 0;  // Total number of spikes processed
 
-    int numSpikes = 0;                                          // total number of spikes encountered
+    unordered_map<int, set<Spike>> avalanches;  // Map avalancheID -> spikes 
 
-    unordered_map<int, set<Spike>> avalanches;                  // each avalanche is identified by  
-                                                                // an integer key
+    int avalancheID = 0;  // Current avalanche ID
 
-    int avalancheID = 0;                                        // initial avalanche
-
-    int prevTimeStep = -100;
+    int prevTimeStep = -100;  // Initialize to dummy value
 
     string directory = "/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/";
     string filename = "lastQuarter";
@@ -51,36 +75,38 @@ int main() {
     ifstream iFile(directory + filename + ".csv");
     string line = "";
     
-    // read csv file line-by-line
+    // ------------------------------------------------------------------------
+    // Read input file line-by-line
+    // ------------------------------------------------------------------------
     while (getline(iFile, line)) {
         stringstream ss(line);
         string token = "";
 
-        // within each csv line, read each comma-separated-value
-        getline(ss, token, ',');                                // fetch first column: timestep        
+        // First column: timestep
+        getline(ss, token, ',');                           
         int currentTimestep = stoi(token);
 
-        // if the current spike is more than tau away 
-        // from the previous spike, start new avalanche
+        // If spike is more than tau away from previous, start new avalanche
         if(prevTimeStep + tau < currentTimestep) {
-            avalancheID++;                                      // have to start a new avalanche
+            avalancheID++;     
         } 
 
-        // second column onwards (neuronIDs)
+        // Neuron IDs for this timestep
         while (getline(ss, token, ',')) { 
             int currentNeuronID = stoi(token);
             Spike currentSpike = {currentTimestep, currentNeuronID};
             numSpikes++;
-            bar.progress(numSpikes, 172323192);                 // progress bar - hardcoded number
+            bar.progress(numSpikes, 172323192);  // Hardcoded total spike count
 
-            // all spikes at the same timestep get added to the current avalanche
             avalanches[avalancheID].insert(currentSpike);
         }
 
         prevTimeStep = currentTimestep;
     }
 
-    //remove 1-sized avalanches
+    // ------------------------------------------------------------------------
+    // Remove single-spike avalanches
+    // ------------------------------------------------------------------------
     vector<int> removals;
     for(auto [id,aval] : avalanches) {
         if(aval.size() == 1)
@@ -91,21 +117,26 @@ int main() {
         avalanches.erase(removals[i]);
     }
 
+    // ------------------------------------------------------------------------
+    // Output results to CSV
+    // ------------------------------------------------------------------------
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
-    std::cout << "\nExecution time for " << numSpikes << " spikes: " << duration.count() << " seconds\n";
+    std::cout << "\nExecution time for " << numSpikes << " spikes: " 
+        << duration.count() << " seconds\n";
     cout << "Number of avalanches: " << avalanches.size() << endl;
 
-    // Documentation and output
-    std::ofstream outputFile("./output/TEMPORAL_" + filename + "_tau-" + to_string(tau) + ".csv");
+    std::ofstream outputFile("./output/TEMPORAL_" + filename + "_tau-" 
+        + to_string(tau) + ".csv");
     if(outputFile.is_open()) {
-        //header row
         outputFile << "ID,StartRow,EndRow,StartT,EndT,Width,TotalSpikes\n";
 
-        //write avalanche data
         int i = 1;
         for(auto [id, aval] : avalanches) {
-            outputFile << i << ",0,0," << aval.begin()->ts << "," << aval.rbegin()->ts << "," << (aval.rbegin()->ts - aval.begin()->ts + 1) << "," << aval.size() << endl;
+            outputFile << i << ",0,0," << aval.begin()->ts << "," 
+            << aval.rbegin()->ts << "," 
+            << (aval.rbegin()->ts - aval.begin()->ts + 1) << "," 
+            << aval.size() << endl;
             i++;
         }
     
@@ -115,15 +146,23 @@ int main() {
         cerr << "Unable to open file for writing." << endl;
     }
 
+
+    // ------------------------------------------------------------------------
+    // Optional: Output results to TXT for debugging
+    // Uncomment to write detailed spike-ownership data.
+    // ------------------------------------------------------------------------
+
     // outputFile.clear();
 
-    // outputFile.open("./output/TEMPORAL_" + filename + "_tau-" + to_string(tau) + ".txt");
+    // outputFile.open("./output/TEMPORAL_" + filename + "_tau-" + 
+    // to_string(tau) + ".txt");
     // if(outputFile.is_open()) {
 
     //     //write avalanche data
     //     int i = 1;
     //     for(auto [id, aval] : avalanches) {
-    //         outputFile << "Avalanche - " << i << " ; Size = " << aval.size() << endl;
+    //         outputFile << "Avalanche - " << i << " ; Size = " 
+    //          << aval.size() << endl;
     //         for(auto spk : aval) {
     //             outputFile<<spk.ts<<", "<<spk.id<<endl;
     //         }
@@ -136,6 +175,4 @@ int main() {
     //     cerr << "Unable to open file for writing." << endl;
     // }
     
-
 }
-

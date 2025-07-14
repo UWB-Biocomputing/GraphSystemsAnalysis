@@ -1,3 +1,6 @@
+// helper file for progress bar visualization
+// does not affect core logic 
+
 #ifndef TQDM_H
 #define TQDM_H
 #include <unistd.h>

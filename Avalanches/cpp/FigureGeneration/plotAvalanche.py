@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
+"""
+@file     plotAvalanche.py
+@author   Arjun Taneja (arjun79@uw.edu)
+@date     13 July, 2025
 
+@brief    Generate log-log plots of avalanche size vs. probability.
+
+Usage:
+    python3 plotAvalanche.py
+"""
 import sys
 sys.path.append("/home/NETID/arjun79/.local/bin")
 
@@ -7,7 +16,9 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+# -----------------------------------------------------------------------------
+# INPUT FILE PATH AND FILENAME CONFIGURATION
+# -----------------------------------------------------------------------------
 infile = "/DATA/arjun79/GraphSystemsAnalysis/Avalanches/cpp/output/"
 # filename = "SpaTemporal_lastQuarter_tau-1"
 # filename = "SpaTemporal_lastQuarter_tau-3"
@@ -21,9 +32,12 @@ filename = "SpaTemporal_lastQuarter_tau-50"
 # filename = "TEMPORAL_lastQuarter_tau-50"
 
 
+# -----------------------------------------------------------------------------
+# READ CSV AND COUNT AVALANCHE SIZES
+# -----------------------------------------------------------------------------
 readCSV = csv.reader(open(infile+filename+".csv"), delimiter=',')
 
-avalSizes = {}
+avalSizes = {}  # Dictionary: avalanche size -> count
 i = 0
 burstCount = 0
 
@@ -31,9 +45,10 @@ for line in readCSV:
     if(i == 0):
         i = i + 1
         continue
-    # print(line)
+    
     aval_size = np.uint32(line[-1])
     if(aval_size > 1e4):
+        # Count 'bursts' as avalanches with size > 10,000
         burstCount += 1
 
     if aval_size in avalSizes:
@@ -45,7 +60,11 @@ for line in readCSV:
 
 print(f'Number of bursts in {filename}: {burstCount}\n')
 
-numAvalanches = i-1
+numAvalanches = i-1     # Total avalanches
+
+# -----------------------------------------------------------------------------
+# LOG-LOG PLOT: avalSize vs probability
+# -----------------------------------------------------------------------------
 x = []
 for key in avalSizes:
     x.append(key)
@@ -84,6 +103,9 @@ plt.text(
     transform=plt.gca().transAxes  # Use axes-relative coordinates (0 to 1)
 )
 
+# -----------------------------------------------------------------------------
+# PLOT POWER-LAW TREND (NON-BURST AVALANCHES ONLY)
+# -----------------------------------------------------------------------------
 x = np.array(x)
 y = np.array(y)
 
