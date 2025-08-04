@@ -27,6 +27,7 @@ w_subset = [w(:,1), w(:,13), w(:,50), w(:,sim_len)];
 figure;
 boxplot(w_subset, 'Symbol','_b', 'Labels', {1,13,50,sim_len});
 hold on;
+fontsize(16,"points")
 title('Synaptic Weight Distribution')
 xlabel('Time (seconds)')
 

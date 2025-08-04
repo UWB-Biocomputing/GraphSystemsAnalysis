@@ -40,6 +40,7 @@ figure;
 bar(x, ltd_ratio(12:end));
 hold on;
 
+fontsize(14,"points")
 title('Percentage of LTD Synapses over Time');
 xlabel('Time (sec)');
 ylabel('Percentage (%)');
