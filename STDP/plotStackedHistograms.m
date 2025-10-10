@@ -1,4 +1,4 @@
-% PLOTWEIGHTDISTRIBUTION Histogram distribution of synaptic weights over time
+% PLOTSTACKEDHISTOGRAMS Histogram and boxplot distribution of synaptic weights over time
 %
 %   1. Plot the histogram distribution of synaptic weights over time
 %   2. Plot the boxplot weight distribution at important times in the
@@ -6,16 +6,12 @@
 %   second), after the first burst (13 seconds), halfway through the
 %   simulation (50 seconds), and at the end of the simulation.
 %
-%   Syntax: plotWeightDistribution(weightEvolution)
+%   Syntax: plotStackedHistograms(weightEvolution)
 %
 %   Input:  
 %   weightEvolution  -  csv file where x is the number of synapses
 %                       and y is number of seconds in the simulation.
 %                       Each row shows the synapse weight at y second.
-%
-%   Output:
-%   <weightHistogram.png>  - weight distribution histogram
-%   <weightBoxPlots.png>   - weight distribution boxplots
 %
 % Author: Vanessa Arndorfer (vanessa.arndorfer@gmail.com)
 
@@ -24,7 +20,7 @@ function plotStackedHistograms(weightEvolution)
 w = readmatrix(weightEvolution, 'Range', [2 1]);
 sim_len = size(w,2);
 
-%% Plot Histograms
+%% Plot
 num_bins = 25; % Number of bins in the histogram
 a = histogram(w(:,sim_len), num_bins);
 
