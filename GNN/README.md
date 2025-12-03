@@ -12,8 +12,7 @@ The goal of this code is to:
 ---
 # Burst GNN Data Analysis Workflow
 
-It does **not** operate directly on the raw GraphML / HDF5 output, but instead assumes that the existing `Bursts/` and `DataReorganization/` workflows in this repository have already
-processed those files.
+It does **not** operate directly on the raw GraphML / HDF5 output, but instead assumes that the existing `Bursts/`workflow in this repository have already processed those files.
 
 To collect the data needed for this GNN + interpretability pipeline, follow the
 steps below:
@@ -24,7 +23,7 @@ steps below:
    - Network structure as GraphML (`*.graphml`)
    - Spike trains and related time series as HDF5 (`*.h5`)
 
-2. **Use the GraphSystemsAnalysis burst & reorganization tools**  
+2. **Use the GraphSystemsAnalysis /burst tools**  
    From this repository, run the existing `Bursts/` workflow to:
    - Detect bursts and their origin neurons.
    - Extract burst-aligned time windows.
@@ -36,8 +35,7 @@ steps below:
 
 3. **Prepare data for GNN training and analysis (this folder)**  
    The files from step (2) are used as input to the data preprocessing scripts
-   in `GNN/Data_Processing/` to clean, normalize, and optionally augment the
-   graphs and associated features. The resulting processed graphs are then used
+   in `GNN/Data_Processing/` to extract subgraphs from origin neuron, clean, normalize, and optionally         augment the graphs and associated features. The resulting processed graphs are then used
    to train a GNN classifier and to run GNNExplainer to obtain saliency masks.
 
 4. **Train a GNN and run interpretability**  
@@ -69,7 +67,7 @@ The main scripts in this directory implement the above workflow:
 - `extract_subgraphs.py`  
   Construct or refine PyTorch Geometric `Data` objects for each burst or
   control window, using:
-  - Graph structure derived from GraphML (via `DataReorganization`).
+  - Graph structure derived from GraphML.
   - Node features derived from binned spike trains or other activity measures.
   Outputs or updates `graphs.pt` and associated metadata.
 
