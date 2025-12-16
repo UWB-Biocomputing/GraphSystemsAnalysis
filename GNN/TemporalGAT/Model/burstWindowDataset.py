@@ -91,7 +91,6 @@ class BurstWindowDataset(Dataset):
                 win = frame[:, start:end] 
 
                 firing_counts = win.astype(np.float32)
-                print(firing_counts.mean(axis=1))
                 participation = (win.sum(axis=1) > 0).astype(np.float32)
 
                 vertex_feat = np.stack(
