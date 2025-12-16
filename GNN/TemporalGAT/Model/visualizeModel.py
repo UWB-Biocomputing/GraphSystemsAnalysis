@@ -1,5 +1,5 @@
 """
-TEMPORALGATINFERENCE Load a Trained Temporal GAT and Visualize Neuron Importance
+VISUALIZEMODEL Load a Trained Temporal GAT and Visualize Neuron Importance
 
     This script loads a previously trained BurstTemporalGAT model and applies it
     to windowed burst data to compute and visualize neuron-level importance scores.
