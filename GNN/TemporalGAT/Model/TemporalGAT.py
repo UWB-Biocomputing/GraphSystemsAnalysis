@@ -69,7 +69,6 @@ from burstTemporalGAT import BurstTemporalGAT
 from burstWindowDataset import BurstWindowDataset
 
 
-
 def load_graphml_edge_index(graphml_file):
     G = nx.read_graphml(graphml_file)
     if len(G.edges) == 0:
@@ -129,11 +128,7 @@ def evaluate(model, loader, k=50):
         "recall": all_recalls,
     }
 
-def get_neuron_coords():
-    neuron_coords = np.array([[i % 100, i // 100] for i in range(10000)])
-    return neuron_coords  
-
-def train(loader, dataset, neuron_coords, num_epochs):
+def train(loader, dataset, num_epochs):
     model = BurstTemporalGAT(vertex_in=4, edge_in=1, hid=64, heads=4, gru_hid=128)
     criterion = nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -192,8 +187,7 @@ def main(h5dir, graphml_path, num_epochs):
         include_coords=True
     )
     loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
-    neuron_coords = get_neuron_coords()
-    out_model = train(loader, dataset, neuron_coords, num_epochs)
+    out_model = train(loader, dataset, num_epochs)
     save_model(out_model, os.path.join(h5dir, "burst_temporal_gat.pt"))
 
 
@@ -205,7 +199,7 @@ if __name__ == "__main__":
     num_epochs = sys.argv[3]
     
     start = time.time()
-    main(h5dir, graphml_path, num_epochs=10)
+    main(h5dir, graphml_path, int(num_epochs))
     end = time.time()
 
     elapsed_time = end - start
