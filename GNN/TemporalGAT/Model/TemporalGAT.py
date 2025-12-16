@@ -160,7 +160,7 @@ def train(loader, dataset, neuron_coords, num_epochs):
             optimizer.step()
             total_loss += loss.item()
         print(f"Epoch {epoch}: loss={total_loss/len(loader):.4f}")
-        evaluate(model, loader, coords=neuron_coords, k=50)
+        evaluate(model, loader, k=50)
     return model
 
 def save_model(model, path):
