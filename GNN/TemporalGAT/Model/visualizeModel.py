@@ -28,6 +28,10 @@ Input:
 
     graphml_path  - Path to the GraphML file describing synaptic connectivity.
 
+    (optional) optional_arg_50  - none value default
+                                  if 3rd argument present: return the neuron importance 
+                                  at every 50 bursts
+
 Output:
     - Spatial scatter plots showing:
          * neuron importance for selected bursts (optional)
@@ -94,7 +98,7 @@ def get_neuron_coords():
     neuron_coords = np.array([[i % 100, i // 100] for i in range(10000)])
     return neuron_coords  
 
-def visualizeAvg(model, loader, neuron_coords, plot_50=False):
+def visualizeAvg(model, loader, neuron_coords, optional_arg_50):
     total_bursts = 0
     all_predictions = []   
     for batch_idx, (x_seq_batch, edge_index_batch, edge_attr_batch, target_batch) in enumerate(loader):
@@ -111,7 +115,7 @@ def visualizeAvg(model, loader, neuron_coords, plot_50=False):
 
             all_predictions.append(preds)
             # Plot every 50 bursts
-            if plot_50: 
+            if optional_arg_50 is not None: 
                 if total_bursts % 50 == 0:
                     print(
                         f"Burst {total_bursts} -- min: {preds.min():.4f}, "
@@ -124,7 +128,8 @@ def visualizeAvg(model, loader, neuron_coords, plot_50=False):
                     plt.title(f"Mean Neuron Importance At Burst {total_bursts}")
                     plt.xlabel("X Coordinate")
                     plt.ylabel("Y Coordinate")
-                    plt.show()
+                    # plt.show()
+                    plt.savefig(os.path.join(h5dir, f"Mean_Neuron_Importance_{total_bursts}_Burst.png"), dpi=300, bbox_inches='tight')
     all_predictions = np.vstack(all_predictions)
 
     mean_importance = all_predictions.mean(axis=0)
@@ -137,9 +142,10 @@ def visualizeAvg(model, loader, neuron_coords, plot_50=False):
     plt.title("Mean Neuron Importance Across All Bursts")
     plt.xlabel("X Coordinate")
     plt.ylabel("Y Coordinate")
-    plt.show()
+    # plt.show()
+    plt.savefig(os.path.join(h5dir, "Mean_Neuron_Importance_Across_All_Bursts.png"), dpi=300, bbox_inches='tight')
 
-def main(h5dir, graphml_path):
+def main(h5dir, graphml_path, optional_arg_50):
     model = load_model(os.path.join(h5dir, "burst_temporal_gat.pt"))
 
     data = np.load(os.path.join(h5dir, "allFrames.npz"))
@@ -157,16 +163,17 @@ def main(h5dir, graphml_path):
     )
     loader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
     neuron_coords = get_neuron_coords()
-    visualizeAvg(model, loader, neuron_coords)
+    visualizeAvg(model, loader, neuron_coords, optional_arg_50)
 
 if __name__ == "__main__":
-    # example execution: python ./TemporalGAT.py /CSSDIV/research/biocomputing/data/2025/tR_1.0--fE_0.90_10000 /CSSDIV/research/biocomputing/data/2025/tR_1.0--fE_0.90_10000_growth_weights.graphml
+    # example execution: python ./visualizeModel.py /CSSDIV/research/biocomputing/data/2025/tR_1.0--fE_0.90_10000 /CSSDIV/research/biocomputing/data/2025/tR_1.0--fE_0.90_10000_growth_weights.graphml
 
     h5dir = sys.argv[1]
     graphml_path = sys.argv[2]
+    optional_arg_50 = sys.argv[3] if len(sys.argv) > 3 else None
     
     start = time.time()
-    main(h5dir, graphml_path)
+    main(h5dir, graphml_path, optional_arg_50)
     end = time.time()
 
     elapsed_time = end - start
