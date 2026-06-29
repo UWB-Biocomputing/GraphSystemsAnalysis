@@ -53,7 +53,7 @@ speed = zeros(edgeBin-startBin+1,1);
 
 % calculate speed of burst using distance between most spiked neuron and origin neuron
 for currentBin = startBin:edgeBin
-    t = currentBin-originBin;            % bins since start of burst
+    b = currentBin-originBin;            % bins since start of burst
     largest = max(frame(:,currentBin));  % Largest neuron spike count in this bin
     maxCountIndices = find(frame(:,currentBin)==largest);         % index of neuron(s) with the highest spike count
     originCopies = ones(size(maxCountIndices)) * (origin+1);      % make sure to convert origin neuron ID to index
@@ -61,7 +61,7 @@ for currentBin = startBin:edgeBin
     % Finds the distances between the highest spiking neurons and the origin.
     distances = getDistances(originCopies, maxCountIndices, xlocs, ylocs);
 
-    speed(currentBin) = mean(distances)/t/unit;
+    speed(currentBin-startBin+1) = mean(distances)/(b*unit);
 end
 meanSpeed = mean(speed);
 end

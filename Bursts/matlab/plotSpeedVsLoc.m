@@ -16,18 +16,31 @@
 %                (number of chunks is layoutSize x layoutSize)
 %
 %   Output:
-%   <h5dir-starters.pdf>     - starter neuron threshold plot
-%   <h5dir-starter-avg.pdf>  - starter neuron threshold plot (block
-%                              averages)
+%   <h5dir-meanspeedvsloc.pdf>    - starter neuron mean speed vs location
+%   <h5dir-covspeedvsloc.pdf>     - starter neuron speed coefficient of
+%                                   variation vs location
+
 
 function plotSpeedVsLoc(h5dir, chunks, layoutSize)
 
+% Default layout
 if nargin < 2
-    layoutSize = 7;
+    layoutSize = 5;
 end
 
 % Burst origins
 origins = readmatrix([h5dir '/allBurstOrigin.csv']);
+
+% Get multi-bursts (Matlab numbering; starting with 1)
+multiBurstIDs = readmatrix([h5dir '/multipleBursts.csv']);
+
+% Generate list of non-multibursts
+burstIDs = 1:size(origins, 1);
+burstIDs = setdiff(burstIDs, multiBurstIDs);
+
+% Excise the multi-burst data from origins
+origins = origins(burstIDs,:);
+
 % Burst speeds
 speeds = readmatrix([h5dir '/allBurstSpeedMean.csv']);
 
@@ -40,48 +53,60 @@ analysisEnd = size(origins,1);
 totalGraphs = layoutSize*layoutSize;
 numBurstsPerChunk = ceil((analysisEnd - analysisStart+1) / totalGraphs);
 numChunks = max(chunks) - min(chunks) + 1;
-startburst = analysisStart + numBurstsPerChunk * min(chunks);
-endburst = min(startburst+(numBurstsPerChunk * numChunks)-1,analysisEnd);
+startBurst = analysisStart + numBurstsPerChunk * min(chunks);
+endBurst = min(startBurst+(numBurstsPerChunk * numChunks)-1,analysisEnd);
 
-% Convert the origin (x, y) locations to origin (tile_x, tile_y)
-tileX = ceil((origins(:,1)+1) / 10);
-tileY = ceil((origins(:,2)+1) / 10);
+% Convert the origin Graphitti (x, y) locations to origin (tileX, tileY).
+% Graphitti coordinates' range is [0, 99]; these will be zero-based.
+tileX = floor(origins(:,1) / 10);
+tileY = floor(origins(:,2) / 10);
 
 % Put each burst speeds in its tile. Remember that Y is rows and X is cols
-for i = startburst:endburst
-    tileSpeeds{tileY(i), tileX(i)} = [tileSpeeds{tileY(i), tileX(i)} speeds(i)];
+% and that we need to convert zero-based to one-based.
+for i = startBurst:endBurst
+    tileSpeeds{tileY(i)+1, tileX(i)+1} = [tileSpeeds{tileY(i)+1, tileX(i)+1} speeds(i)];
 end
 
 % Compute mean and standard deviation of each tile
 meanTileSpeeds = cellfun(@mean, tileSpeeds);
 stdTileSpeeds = cellfun(@std, tileSpeeds);
+covTileSpeeds = stdTileSpeeds ./ meanTileSpeeds;
 
-% Scale color axis for only nonzero tiles
-nonEmptyTiles = ~cellfun(@isempty, tileSpeeds);
-cmap = parula;
-cmap(1,:) = [1 1 1];
+% Identify tiles with too few origins
+tileSizes = cellfun(@length, tileSpeeds);
+bigEnoughTiles = tileSizes > 10;
 
 % Now plot two images
-cmin = min(meanTileSpeeds(nonEmptyTiles));
-cmax = max(meanTileSpeeds(nonEmptyTiles));
+cmin = min(meanTileSpeeds(bigEnoughTiles));
+cmax = max(meanTileSpeeds(bigEnoughTiles));
 figure(1); clf;
-imagesc(meanTileSpeeds, [cmin cmax]);
-colormap(cmap);
+meanIm = imagesc(meanTileSpeeds, [cmin cmax]);
+colormap(parula);
+set(meanIm, 'AlphaData', bigEnoughTiles)
 axis ij;
-xticklabels({});
-yticklabels({});
+% xticklabels({});
+% yticklabels({});
 colorbar;
 
-cmin = min(stdTileSpeeds(nonEmptyTiles));
-cmax = max(stdTileSpeeds(nonEmptyTiles));
+% exportgraphics(ax,[h5dir '-meanspeedvsloc.pdf']);
+
+cmin = min(covTileSpeeds(bigEnoughTiles));
+cmax = max(covTileSpeeds(bigEnoughTiles));
 figure(2); clf;
-imagesc(stdTileSpeeds, [cmin cmax]);
-colormap(cmap);
+covIm = imagesc(covTileSpeeds, [cmin cmax]);
+colormap(parula);
+set(covIm, 'AlphaData', bigEnoughTiles)
 axis ij;
-xticklabels({});
-yticklabels({});
+% xticklabels({});
+% yticklabels({});
 colorbar;
 
-% exportgraphics(ax,[h5dir '-starter-avg.pdf']);
+% exportgraphics(ax,[h5dir '-covspeedvsloc.pdf']);
 
+figure(3); clf;
+plot3(origins(startBurst:endBurst, 1), origins(startBurst:endBurst, 2), ...
+    speeds(startBurst:endBurst), '.');
+set(gca, 'XLim', [0 100]);
+set(gca, 'YLim', [0 100]);
+view(15, -50);
 

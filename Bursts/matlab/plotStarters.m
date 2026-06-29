@@ -19,17 +19,26 @@
 %   <h5dir-starter-avg.pdf>  - starter neuron threshold plot (block
 %                              averages)
 
-function plotStarters(h5dir, chunks, layoutSize)
+function plotStarters(h5dir, chunks, layoutSize, parent)
 
-% Default layout
-if nargin < 2
+% Default arguments
+if nargin < 2 || isempty(chunks)
+    chunks = 0; % Or whatever the default should be, say all? Actually we'll default to 0 for a single chunk if not specified.
+end
+if nargin < 3 || isempty(layoutSize)
     layoutSize = 5;
 end
+if nargin < 4 || isempty(parent)
+    doExport = true;
+    figure(1);
+    clf;
+    parent = gca;
+else
+    doExport = false;
+end
 
-% Endogenously active neurons (Graphitti neuron IDs, [0, 9999])
-starterNeurons = h5read([h5dir '.h5'], '/starterNeurons');
 % Neuron thresholds (for all neurons)
-neuronThresh = h5read('tR_1.0--fE_0.90.h5', '/neuronThresh');
+load([h5dir '/neuronThresh']);
 
 % Burst origins for overlay
 %
@@ -37,6 +46,16 @@ neuronThresh = h5read('tR_1.0--fE_0.90.h5', '/neuronThresh');
 % is Graphitti neuron ID, i.e., zero-based, and (x, y) are also zero-based,
 % ij coordinates))
 origins = readmatrix([h5dir '/allBurstOrigin.csv']);
+
+% Get multi-bursts (Matlab numbering; starting with 1)
+multiBurstIDs = readmatrix([h5dir '/multipleBursts.csv']);
+
+% Generate list of non-multibursts
+burstIDs = 1:size(origins, 1);
+burstIDs = setdiff(burstIDs, multiBurstIDs);
+
+% Excise the multi-burst data from origins
+origins = origins(burstIDs,:);
 
 % Let's make an image where we show how far lowered the endogenously active
 % neuron thresholds are.
@@ -53,8 +72,6 @@ loweredIm = reshape(lowered, [100 100])';
 
 cmin = min(lowered(lowered > 0));
 cmax = max(lowered);
-
-clf;
 
 % Average the starter threshold reduction over a 10x10 neuron tile and plot
 % the origins on top of that. To make plotting easy, we replicate the
@@ -82,15 +99,17 @@ end
 
 % At this point, "tileAvgs" is an image that, in ij coordinates, matches
 % the network layout
-im = imagesc(tileAvgs, [cmin cmax]);
-ax = gca;
+im = imagesc(parent, tileAvgs, [cmin cmax]);
+ax = parent;
 ax.XLim = [0 100];
 ax.YLim = [0 100];
-colormap(parula);
-colorbar;
+colormap(ax, parula);
+if doExport
+    colorbar(ax);
+end
 % yticklabels({});
 
-hold on;
+hold(ax, 'on');
 
 % origin overlay
 analysisStart = 1;
@@ -112,15 +131,17 @@ endburst = min(startburst+(numBurstsPerChunk * numChunks)-1,analysisEnd);
 %
 % We have already transposed the array, and imagesc() uses ij
 % coordinates (origin at top left).
-plot(origins(startburst:endburst,1)+1, ...
+plot(ax, origins(startburst:endburst,1)+1, ...
     origins(startburst:endburst,2)+1, ...
     '*','MarkerEdgeColor','k','MarkerFaceColor','k', ...
     'Color', 'black');
-axis ij;
-xticklabels({});
-yticklabels({});
+axis(ax, 'ij');
+xticklabels(ax, {});
+yticklabels(ax, {});
 
-exportgraphics(ax,[h5dir '-starter-avg.pdf']);
+if doExport
+    exportgraphics(ax,[h5dir '-starter-avg.pdf']);
+end
 
 % We're also going to do a Spearman's rho test to see if there is any
 % correlation between the average threshold reduction in a tile and the

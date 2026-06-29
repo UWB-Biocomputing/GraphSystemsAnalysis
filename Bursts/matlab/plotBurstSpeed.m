@@ -11,26 +11,40 @@
 %   <h5dir-byrstspeed.pdf>  - burst speed plot
 
 
-function plotBurstSpeed(h5dir)
+function plotBurstSpeed(h5dir, parent)
+
+if nargin < 2
+    figure(1);
+    clf;
+    parent = gca;
+    doExport = true;
+else
+    doExport = false;
+end
 
 % Plot the mean speed information
-clf;
 meanSpeeds = readmatrix([h5dir '/allBurstSpeedMean.csv']);
 numbursts = length(meanSpeeds);
-plot(1:numbursts, meanSpeeds, 'k.', 'MarkerSize', 3);
-hold on;
+plot(parent, 1:numbursts, meanSpeeds, 'k.', 'MarkerSize', 3);
+hold(parent, 'on');
 % We'll also plot a moving average
 k = 100;
 smoothed = movmean(meanSpeeds, k);
-p = plot(1:numbursts, smoothed, 'b-');
-ax = gca;
-xlabel('Burst Number');
-ylabel('Propagation Speed (ms^{-1})');
+p = plot(parent, 1:numbursts, smoothed, 'b-');
+ax = parent;
+
+if doExport
+    xlabel(ax, 'Burst Number');
+    ylabel(ax, 'Propagation Speed (ms^{-1})');
+end
+
 ax.FontSize = 12;
-yl = ax.YLim;
-ax.YLim = [0 0.7];
+ax.YLim = [0 1.4];
 set(p, 'LineWidth', 4);
-exportgraphics(ax, [h5dir '-burstspeed.pdf']);
+
+if doExport
+    exportgraphics(ax, [h5dir '-burstspeed.pdf']);
+end
 
 % Next, let's look at the non-aggregated data. There are so many bursts
 % that we can't plot the range of values for each, so we'll plot the max

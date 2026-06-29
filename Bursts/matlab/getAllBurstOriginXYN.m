@@ -37,7 +37,9 @@ framesFilePath = [h5dir '/allFrames.mat'];      % array of matrixes containing t
 
 fprintf('Loading data files... ');
 % Input file data
-burstInfo = csvread(binnedBurstInfoFilePath,1,1);   % only used to get number of burst (could be removed if there's a way to do it without csvread)
+burstInfo = csvread(binnedBurstInfoFilePath,1,1);   % only used to get number
+                                                    % of burst (could be removed
+                                                    % if there's a way to do it without csvread)
 % This is a cell array containing spike rate of each burst. The spike rates are stored in
 % a matrix where the rows correspond to each neuron and columns corresponds to the time bin.
 % NOTE: variable name for accessing the spike rates of specific burst is allFrames.

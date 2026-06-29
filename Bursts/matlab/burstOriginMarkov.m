@@ -12,17 +12,36 @@
 %   Output:
 %   <h5dir-markov.pdf>     - burst origin plot
 
-function burstOriginMarkov(h5dir, layoutSize)
+function burstOriginMarkov(h5dir, layoutSize, parent)
 
 % Default layout
 if nargin < 2
     layoutSize = 5;
+end
+if nargin < 3
+    doExport = true;
+    figure(1);
+    clf;
+    t = tiledlayout(layoutSize,layoutSize);
+else
+    doExport = false;
+    t = parent;
 end
 
 % burst origin (x, y), neuron ID, and origin bin # for every burst. (This
 % is Graphitti neuron ID, i.e., zero-based, and (x, y) are also zero-based,
 % ij coordinates))
 origins = readmatrix([h5dir '/allBurstOrigin.csv']);
+
+% Get multi-bursts (Matlab numbering; starting with 1)
+multiBurstIDs = readmatrix([h5dir '/multipleBursts.csv']);
+
+% Generate list of non-multibursts
+burstIDs = 1:size(origins, 1);
+burstIDs = setdiff(burstIDs, multiBurstIDs);
+
+% Excise the multi-burst data from origins
+origins = origins(burstIDs,:);
 
 % Only analyze bursts in this area of interest
 analysisStart = 1;
@@ -37,18 +56,15 @@ yt = floor(origins(:,2)/10);
 % row major order). Their range will be [0, 99].
 tileID = yt * 10 + xt;
 
-figure(1);
-clf;
-
-% Set up a tiled layout with no space in between plots
-t = tiledlayout(layoutSize,layoutSize);
 t.Padding = 'tight';
-t.TileSpacing = 'tight';
+t.TileSpacing = 'none';
 
 numgraphs = layoutSize*layoutSize;
 numbursts = ceil((analysisEnd - analysisStart+1) / numgraphs);
-fprintf('%d bursts per graph (%d total bursts)\n', numbursts, ...
-    analysisEnd - analysisStart+1);
+if doExport
+    fprintf('%d bursts per graph (%d total bursts)\n', numbursts, ...
+        analysisEnd - analysisStart+1);
+end
 
 % Let's save all of the graphs so it's possible to plot them using a common
 % color axis at the end, if desired.
@@ -111,16 +127,14 @@ for i = 1:theGraph
     tiles(i) = nexttile(t);
     % imagesc(MMcube{i}, [cmin cmax]);
     imagesc(MMcube{i});
-    colormap(parula);
+    colormap(tiles(i), parula);
     axis xy;
     xticklabels({})
     yticklabels({})
 end
 
-% cb = colorbar(tiles(end));
-% cb.Layout.Tile = 'east';
-% cb.Ticks = [];
-
-exportgraphics(t,[h5dir '-markov.pdf']);
+if doExport
+    exportgraphics(t,[h5dir '-markov.pdf']);
+end
 
 

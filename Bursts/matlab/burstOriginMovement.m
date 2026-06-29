@@ -12,11 +12,20 @@
 %   Output:
 %   <h5dir-origins.pdf>     - burst origin plot
 
-function burstOriginMovement(h5dir, layoutSize)
+function burstOriginMovement(h5dir, layoutSize, parent)
 
 % Default layout
 if nargin < 2
     layoutSize = 5;
+end
+if nargin < 3
+    doExport = true;
+    figure(1);
+    clf;
+    t = tiledlayout(layoutSize,layoutSize);
+else
+    doExport = false;
+    t = parent;
 end
 
 % burst origin (x, y), neuron ID, and origin bin # for every burst. (This
@@ -24,29 +33,34 @@ end
 % ij coordinates))
 origins = readmatrix([h5dir '/allBurstOrigin.csv']);
 
-% Only analyze bursts in this area of interest
-analysisStart = 1;
-analysisEnd = size(origins,1);
+% Get multi-bursts (Matlab numbering; starting with 1)
+multiBurstIDs = readmatrix([h5dir '/multipleBursts.csv']);
 
-figure(1);
-clf;
+% Generate list of non-multibursts
+burstIDs = 1:size(origins, 1);
+burstIDs = setdiff(burstIDs, multiBurstIDs);
 
-% Set up a tiled layout with no space in between plots
-t = tiledlayout(layoutSize,layoutSize);
+% Excise the multi-burst data from origins
+origins = origins(burstIDs,:);
+
 t.Padding = 'tight';
-t.TileSpacing = 'tight';
+t.TileSpacing = 'none';
 
 numgraphs = layoutSize*layoutSize;
-numbursts = ceil((analysisEnd - analysisStart + 1) / numgraphs);
-fprintf('%d bursts per graph (%d total bursts)\n', numbursts, ...
-    analysisEnd - analysisStart+1);
+numburstsPerGraph = ceil(length(burstIDs) / numgraphs);
 
-for startburst = analysisStart:numbursts:analysisEnd
-    endburst = min(startburst+numbursts-1,analysisEnd);
-    nexttile
+fprintf('%s: %d bursts per graph (%d total bursts)\n', ...
+        h5dir, numburstsPerGraph, length(burstIDs));
+
+
+
+for startburst = 1:numburstsPerGraph:length(burstIDs)
+    endburst = min(startburst+numburstsPerGraph-1,length(burstIDs));
+    nexttile(t);
     plot(origins(startburst:endburst,1), ...
         origins(startburst:endburst,2), '*-', ...
         'MarkerEdgeColor','k','MarkerFaceColor','k');
+    
     % Remember, the origins are in Graphitti coordinates
     axis ij;
     ax = gca;
@@ -59,7 +73,9 @@ for startburst = analysisStart:numbursts:analysisEnd
 
 end
 
-exportgraphics(t,[h5dir '-origins.pdf']);
+if doExport
+    exportgraphics(t,[h5dir '-origins.pdf']);
+end
 
 %xlabel('Burst x location')
 %ylabel('Burst y location')
